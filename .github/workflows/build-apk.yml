@@ -1,52 +1,34 @@
-name: Build VEbalist Android APK
+name: Build VEbalist APK
 
 on:
   workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out source
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
 
-      - uses: android-actions/setup-android@v3
-
-      - uses: gradle/actions/setup-gradle@v4
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.7"
 
       - name: Build debug APK
         run: gradle assembleDebug
 
-      - name: Restore release keystore
-        if: ${{ secrets.VEBALIST_KEYSTORE_B64 != '' }}
-        shell: bash
-        run: |
-          echo "${{ secrets.VEBALIST_KEYSTORE_B64 }}" | base64 --decode > "$RUNNER_TEMP/vebalist-release.jks"
-
-      - name: Build signed release APK
-        if: ${{ secrets.VEBALIST_KEYSTORE_B64 != '' }}
-        env:
-          VEBALIST_KEYSTORE_PATH: ${{ runner.temp }}/vebalist-release.jks
-          VEBALIST_KEYSTORE_PASSWORD: ${{ secrets.VEBALIST_KEYSTORE_PASSWORD }}
-          VEBALIST_KEY_ALIAS: ${{ secrets.VEBALIST_KEY_ALIAS }}
-          VEBALIST_KEY_PASSWORD: ${{ secrets.VEBALIST_KEY_PASSWORD }}
-        run: gradle assembleRelease
-
-      - uses: actions/upload-artifact@v4
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
         with:
           name: VEbalist-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
-
-      - uses: actions/upload-artifact@v4
-        if: ${{ secrets.VEBALIST_KEYSTORE_B64 != '' }}
-        with:
-          name: VEbalist-release-apk
-          path: app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
