@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+        <EditText android:id="@+id/editTitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Title"/>
+        <EditText android:id="@+id/editPrice" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Price" android:inputType="numberDecimal"/>
+        <EditText android:id="@+id/editCategory" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Category ID"/>
+        <EditText android:id="@+id/editCondition" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Condition"/>
+        <EditText android:id="@+id/editDescription" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Description" android:minLines="5" android:gravity="top"/>
+        <EditText android:id="@+id/editPayment" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Payment Policy ID"/>
+        <EditText android:id="@+id/editReturn" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Return Policy ID"/>
+        <EditText android:id="@+id/editFulfillment" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Fulfillment Policy ID"/>
+        <EditText android:id="@+id/editLocation" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Inventory Location Key"/>
+    </LinearLayout>
+</ScrollView>

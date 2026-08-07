@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: vebalist-backend
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: EBAY_MARKETPLACE_ID
+        value: EBAY_US
+      - key: EBAY_CLIENT_ID
+        sync: false
+      - key: EBAY_CLIENT_SECRET
+        sync: false
+      - key: EBAY_REFRESH_TOKEN
+        sync: false
+      - key: EBAY_REFRESH_SCOPES
+        sync: false

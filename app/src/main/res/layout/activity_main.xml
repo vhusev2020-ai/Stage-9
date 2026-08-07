@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:padding="14dp">
+
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="VEbalist" android:textStyle="bold" android:textSize="26sp"/>
+
+    <TextView android:id="@+id/statusText" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:text="Configure backend, then import a batch."
+        android:paddingBottom="8dp"/>
+
+    <EditText android:id="@+id/backendUrl" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:hint="Secure backend URL (https://...)"
+        android:inputType="textUri"/>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <Button android:id="@+id/saveBackendButton" android:layout_width="0dp"
+            android:layout_height="wrap_content" android:layout_weight="1" android:text="Test Backend"/>
+        <Button android:id="@+id/loadEbaySetupButton" android:layout_width="0dp"
+            android:layout_height="wrap_content" android:layout_weight="1" android:text="Load eBay Setup"/>
+    </LinearLayout>
+
+    <Spinner android:id="@+id/paymentSpinner" android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+    <Spinner android:id="@+id/returnSpinner" android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+    <Spinner android:id="@+id/fulfillmentSpinner" android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+    <Spinner android:id="@+id/locationSpinner" android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <Button android:id="@+id/applyDefaultsButton" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:text="Apply eBay Defaults to Batch"/>
+
+    <Button android:id="@+id/importButton" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:text="Import ChatGPT Batch ZIP"/>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <Button android:id="@+id/validateAspectsButton" android:layout_width="0dp"
+            android:layout_height="wrap_content" android:layout_weight="1" android:text="Validate eBay Fields"/>
+        <Button android:id="@+id/publishReadyButton" android:layout_width="0dp"
+            android:layout_height="wrap_content" android:layout_weight="1" android:text="Publish Selected"
+            android:enabled="false"/>
+    </LinearLayout>
+
+    <Button android:id="@+id/testListingButton" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:text="Test First Ready Listing"/>
+
+    <Button android:id="@+id/fillMissingButton" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:text="Fill Missing eBay Fields"/>
+
+    <Button android:id="@+id/historyButton" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:text="Published History"/>
+
+    <Button android:id="@+id/retryFailedButton" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:text="Retry Failed" android:enabled="false"/>
+
+    <ListView android:id="@+id/listView" android:layout_width="match_parent"
+        android:layout_height="0dp" android:layout_weight="1" android:choiceMode="multipleChoice"/>
+</LinearLayout>

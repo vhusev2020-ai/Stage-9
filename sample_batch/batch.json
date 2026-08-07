@@ -1,0 +1,11 @@
+{
+  "batch_version": 2,
+  "batch_name": "VEbalist Test Batch",
+  "marketplace": "EBAY_US",
+  "currency": "USD",
+  "listings": [
+    {
+      "folder": "listing_001"
+    }
+  ]
+}

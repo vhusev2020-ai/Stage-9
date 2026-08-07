@@ -1,0 +1,28 @@
+{
+  "sku": "TEST-001",
+  "title": "Replace With Real eBay Test Listing",
+  "description": "Replace with the actual listing description.",
+  "category_id": "",
+  "condition": "USED",
+  "condition_description": "",
+  "price": 9.99,
+  "quantity": 1,
+  "brand": "",
+  "model": "",
+  "mpn": "",
+  "upc": "",
+  "item_specifics": {},
+  "shipping": {
+    "weight_oz": null,
+    "length_in": null,
+    "width_in": null,
+    "height_in": null,
+    "fulfillment_policy_id": ""
+  },
+  "payment_policy_id": "",
+  "return_policy_id": "",
+  "inventory_location_key": "",
+  "photos": [
+    "photo_01.jpg"
+  ]
+}
