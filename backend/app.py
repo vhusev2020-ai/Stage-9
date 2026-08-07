@@ -154,10 +154,16 @@ def create_inventory(item,image_urls):
         }
     }
     if shipping.get("package_length") and shipping.get("package_width") and shipping.get("package_height") and (pounds or ounces):
-        payload["packageWeightAndSize"]={
+        package={
             "dimensions":{"height":float(shipping["package_height"]),"length":float(shipping["package_length"]),"width":float(shipping["package_width"]),"unit":"INCH"},
-            "weight":{"value":pounds*16+ounces,"unit":"OUNCE"},
-            "packageType":shipping.get("package_type") or "MAILING_BOX"}
+            "weight":{"value":pounds*16+ounces,"unit":"OUNCE"}}
+        # Although MAILING_BOX exists in the Inventory API enum, eBay US can
+        # reject it during publish as Trading value "MailingBoxes" (25101).
+        # Package type is optional; dimensions and weight are sufficient.
+        package_type=shipping.get("package_type")
+        if package_type and package_type != "MAILING_BOX":
+            package["packageType"]=package_type
+        payload["packageWeightAndSize"]=package
     if item.get("condition_description"):payload["conditionDescription"]=item["condition_description"]
     r=requests.put(API+f"/sell/inventory/v1/inventory_item/{item['sku']}",headers=h(),json=payload,timeout=60)
     if r.status_code not in (200,201,204): raise RuntimeError(f"Inventory {r.status_code}: {r.text[:800]}")
