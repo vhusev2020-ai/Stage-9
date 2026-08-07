@@ -172,6 +172,8 @@ def offer_payload(item):
 
 def find_offer(sku):
     r=requests.get(API+"/sell/inventory/v1/offer",headers=h(),params={"sku":sku,"limit":100},timeout=40)
+    if r.status_code==404:
+        return None
     if r.status_code!=200: raise RuntimeError(f"Offer lookup {r.status_code}: {r.text[:800]}")
     offers=r.json().get("offers",[])
     return offers[0] if offers else None
