@@ -1,10 +1,14 @@
 import os, time, base64, tempfile, requests
+from urllib.parse import quote
 from flask import Flask, request, jsonify
 
 app=Flask(__name__)
 API="https://api.ebay.com"
 TOKEN_URL="https://api.ebay.com/identity/v1/oauth2/token"
 MARKETPLACE=os.getenv("EBAY_MARKETPLACE_ID","EBAY_US")
+LOCATION_KEY=os.getenv("EBAY_LOCATION_KEY","vebalist-40517")
+LOCATION_POSTAL_CODE=os.getenv("EBAY_LOCATION_POSTAL_CODE","40517")
+LOCATION_COUNTRY=os.getenv("EBAY_LOCATION_COUNTRY","US")
 _cache={"token":None,"expires":0}
 
 def access_token():
@@ -41,6 +45,26 @@ def ebay_get(path,params=None):
     if r.status_code!=200: raise RuntimeError(f"eBay GET {r.status_code}: {r.text[:800]}")
     return r.json()
 
+def ensure_inventory_location(locations):
+    if locations:
+        return locations
+    payload={
+        "location":{"address":{
+            "postalCode":LOCATION_POSTAL_CODE,
+            "country":LOCATION_COUNTRY}},
+        "name":"VEbalist Ship From",
+        "merchantLocationStatus":"ENABLED",
+        "locationTypes":["WAREHOUSE"]}
+    key=quote(LOCATION_KEY,safe="")
+    r=requests.post(API+f"/sell/inventory/v1/location/{key}",headers=h(),json=payload,timeout=40)
+    if r.status_code not in (200,201,204,409):
+        raise RuntimeError(f"Create inventory location {r.status_code}: {r.text[:800]}")
+    refreshed=ebay_get("/sell/inventory/v1/location",{"limit":100})
+    locations=refreshed.get("locations",[])
+    if not locations:
+        raise RuntimeError("eBay inventory location was not created")
+    return locations
+
 @app.get("/api/status")
 def status():
     try:
@@ -56,11 +80,12 @@ def account_setup():
         r=ebay_get("/sell/account/v1/return_policy",{"marketplace_id":MARKETPLACE})
         f=ebay_get("/sell/account/v1/fulfillment_policy",{"marketplace_id":MARKETPLACE})
         l=ebay_get("/sell/inventory/v1/location",{"limit":100})
+        locations=ensure_inventory_location(l.get("locations",[]))
         return jsonify(ok=True,
             paymentPolicies=p.get("paymentPolicies",[]),
             returnPolicies=r.get("returnPolicies",[]),
             fulfillmentPolicies=f.get("fulfillmentPolicies",[]),
-            locations=l.get("locations",[]))
+            locations=locations)
     except Exception as e:
         return jsonify(ok=False,error=str(e)),400
 
