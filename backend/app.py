@@ -137,9 +137,15 @@ def create_inventory(item,image_urls):
     shipping=item.get("shipping",{})
     pounds=float(shipping.get("weight_pounds") or 0)
     ounces=float(shipping.get("weight_ounces") or 0)
+    condition=item["condition"]
+    # Men's Athletic Shoes uses eBay's apparel condition mapping, where
+    # USED_EXCELLENT (ID 3000) is displayed as "Pre-owned - Good". Older
+    # VEbalist batches used USED_GOOD (ID 5000), which eBay rejects here.
+    if str(item.get("category_id")) == "15709" and condition == "USED_GOOD":
+        condition="USED_EXCELLENT"
     payload={
         "availability":{"shipToLocationAvailability":{"quantity":int(item.get("quantity",1))}},
-        "condition":item["condition"],
+        "condition":condition,
         "product":{
             "title":item["title"],
             "description":item["description"],
