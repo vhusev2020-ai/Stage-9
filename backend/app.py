@@ -134,6 +134,9 @@ def upload_image(photo):
         except OSError: pass
 
 def create_inventory(item,image_urls):
+    shipping=item.get("shipping",{})
+    pounds=float(shipping.get("weight_pounds") or 0)
+    ounces=float(shipping.get("weight_ounces") or 0)
     payload={
         "availability":{"shipToLocationAvailability":{"quantity":int(item.get("quantity",1))}},
         "condition":item["condition"],
@@ -144,12 +147,17 @@ def create_inventory(item,image_urls):
             "aspects":item.get("item_specifics",{})
         }
     }
+    if shipping.get("package_length") and shipping.get("package_width") and shipping.get("package_height") and (pounds or ounces):
+        payload["packageWeightAndSize"]={
+            "dimensions":{"height":float(shipping["package_height"]),"length":float(shipping["package_length"]),"width":float(shipping["package_width"]),"unit":"INCH"},
+            "weight":{"value":pounds*16+ounces,"unit":"OUNCE"},
+            "packageType":shipping.get("package_type") or "MAILING_BOX"}
     if item.get("condition_description"):payload["conditionDescription"]=item["condition_description"]
     r=requests.put(API+f"/sell/inventory/v1/inventory_item/{item['sku']}",headers=h(),json=payload,timeout=60)
     if r.status_code not in (200,201,204): raise RuntimeError(f"Inventory {r.status_code}: {r.text[:800]}")
 
-def create_offer(item):
-    payload={
+def offer_payload(item):
+    return {
         "sku":item["sku"],"marketplaceId":MARKETPLACE,"format":"FIXED_PRICE",
         "availableQuantity":int(item.get("quantity",1)),
         "categoryId":str(item["category_id"]),
@@ -161,9 +169,22 @@ def create_offer(item):
             "returnPolicyId":item["return_policy_id"]},
         "pricingSummary":{"price":{"currency":"USD","value":str(item["price"])}}
     }
+
+def find_offer(sku):
+    r=requests.get(API+"/sell/inventory/v1/offer",headers=h(),params={"sku":sku,"limit":100},timeout=40)
+    if r.status_code!=200: raise RuntimeError(f"Offer lookup {r.status_code}: {r.text[:800]}")
+    offers=r.json().get("offers",[])
+    return offers[0] if offers else None
+
+def create_offer(item):
+    payload=offer_payload(item)
     r=requests.post(API+"/sell/inventory/v1/offer",headers=h(),json=payload,timeout=60)
     if r.status_code not in (200,201): raise RuntimeError(f"Offer {r.status_code}: {r.text[:800]}")
     return r.json()["offerId"]
+
+def update_offer(offer_id,item):
+    r=requests.put(API+f"/sell/inventory/v1/offer/{offer_id}",headers=h(),json=offer_payload(item),timeout=60)
+    if r.status_code not in (200,204): raise RuntimeError(f"Update offer {r.status_code}: {r.text[:800]}")
 
 def publish_offer(offer_id):
     r=requests.post(API+f"/sell/inventory/v1/offer/{offer_id}/publish",headers=h(),json={},timeout=60)
@@ -191,6 +212,13 @@ def validate_listing_payload(item):
         return False, "Invalid price"
     if int(item.get("quantity",0)) <= 0:
         return False, "Quantity must be > 0"
+    shipping=item.get("shipping",{})
+    shipping_missing=[]
+    if not (shipping.get("weight_pounds") or shipping.get("weight_ounces")): shipping_missing.append("packed weight")
+    for key,label in (("package_length","package length"),("package_width","package width"),("package_height","package height")):
+        if not shipping.get(key): shipping_missing.append(label)
+    if shipping_missing:
+        return False, "Shipping information incomplete: " + ", ".join(shipping_missing)
 
     # Check category-required aspects against eBay taxonomy
     category_id=str(item["category_id"])
@@ -229,11 +257,23 @@ def publish_batch():
     for item in request.get_json(force=True).get("items",[]):
         x={"sku":item.get("sku"),"ok":False}
         try:
+            valid,error=validate_listing_payload(item)
+            if not valid: raise RuntimeError(error)
+            existing=find_offer(item.get("sku"))
+            if existing and not item.get("update_existing"):
+                listing_id=existing.get("listing",{}).get("listingId")
+                raise RuntimeError("SKU already published" + (f" as listing {listing_id}" if listing_id else ""))
             urls=[upload_image(p) for p in item.get("photos_data",[])]
             create_inventory(item,urls)
-            offer=create_offer(item)
-            pub=publish_offer(offer)
-            x.update(ok=True,offerId=offer,listingId=pub.get("listingId"))
+            if existing:
+                offer=existing["offerId"]
+                update_offer(offer,item)
+                listing_id=existing.get("listing",{}).get("listingId")
+                x.update(ok=True,offerId=offer,listingId=listing_id,updated=True)
+            else:
+                offer=create_offer(item)
+                pub=publish_offer(offer)
+                x.update(ok=True,offerId=offer,listingId=pub.get("listingId"))
         except Exception as e: x["error"]=str(e)
         results.append(x)
     return jsonify(results=results)
