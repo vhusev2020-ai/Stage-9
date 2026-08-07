@@ -16,7 +16,7 @@ def access_token():
     client_secret=os.getenv("EBAY_CLIENT_SECRET")
     refresh=os.getenv("EBAY_REFRESH_TOKEN")
     scopes=os.getenv("EBAY_REFRESH_SCOPES","").strip()
-    if not all([client_id,client_secret,refresh,scopes]):
+    if not all([client_id,client_secret,refresh]):
         fallback=os.getenv("EBAY_USER_ACCESS_TOKEN")
         if fallback: return fallback
         raise RuntimeError("Configure EBAY_CLIENT_ID, EBAY_CLIENT_SECRET, EBAY_REFRESH_TOKEN and EBAY_REFRESH_SCOPES")
@@ -24,7 +24,7 @@ def access_token():
     basic=base64.b64encode(f"{client_id}:{client_secret}".encode()).decode()
     r=requests.post(TOKEN_URL,
         headers={"Authorization":f"Basic {basic}","Content-Type":"application/x-www-form-urlencoded"},
-        data={"grant_type":"refresh_token","refresh_token":refresh,"scope":scopes},
+        data={"grant_type":"refresh_token","refresh_token":refresh},
         timeout=30)
     if r.status_code!=200:
         raise RuntimeError(f"OAuth refresh {r.status_code}: {r.text[:800]}")
