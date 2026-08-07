@@ -262,16 +262,19 @@ def publish_batch():
             valid,error=validate_listing_payload(item)
             if not valid: raise RuntimeError(error)
             existing=find_offer(item.get("sku"))
-            if existing and not item.get("update_existing"):
-                listing_id=existing.get("listing",{}).get("listingId")
+            listing_id=existing.get("listing",{}).get("listingId") if existing else None
+            if listing_id and not item.get("update_existing"):
                 raise RuntimeError("SKU already published" + (f" as listing {listing_id}" if listing_id else ""))
             urls=[upload_image(p) for p in item.get("photos_data",[])]
             create_inventory(item,urls)
             if existing:
                 offer=existing["offerId"]
                 update_offer(offer,item)
-                listing_id=existing.get("listing",{}).get("listingId")
-                x.update(ok=True,offerId=offer,listingId=listing_id,updated=True)
+                if listing_id:
+                    x.update(ok=True,offerId=offer,listingId=listing_id,updated=True)
+                else:
+                    pub=publish_offer(offer)
+                    x.update(ok=True,offerId=offer,listingId=pub.get("listingId"),resumed=True)
             else:
                 offer=create_offer(item)
                 pub=publish_offer(offer)
