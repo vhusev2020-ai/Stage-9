@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify
 
 app=Flask(__name__)
 API="https://api.ebay.com"
+MEDIA_API="https://apim.ebay.com"
 TOKEN_URL="https://api.ebay.com/identity/v1/oauth2/token"
 MARKETPLACE=os.getenv("EBAY_MARKETPLACE_ID","EBAY_US")
 LOCATION_KEY=os.getenv("EBAY_LOCATION_KEY","vebalist-40517")
@@ -120,7 +121,7 @@ def upload_image(photo):
         f.write(raw); path=f.name
     try:
         with open(path,"rb") as img:
-            r=requests.post(API+"/commerce/media/v1_beta/image/create_image_from_file",
+            r=requests.post(MEDIA_API+"/commerce/media/v1_beta/image/create_image_from_file",
                 headers={"Authorization":f"Bearer {access_token()}"},
                 files={"image":(photo["name"],img,"image/jpeg")},timeout=90)
         if r.status_code not in (200,201):
