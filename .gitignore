@@ -1,0 +1,11 @@
+.gradle/
+build/
+app/build/
+local.properties
+*.jks
+*.keystore
+backend/.venv/
+backend/__pycache__/
+backend/**/*.pyc
+.env
+.DS_Store

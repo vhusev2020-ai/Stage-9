@@ -81,6 +81,16 @@ object BatchImporter {
                 returnPolicyId = j.optString("return_policy_id"),
                 fulfillmentPolicyId = shipping.optString("fulfillment_policy_id"),
                 inventoryLocationKey = j.optString("inventory_location_key"),
+                weightPounds = shipping.numberOrNull("weight_pounds"),
+                weightOunces = shipping.numberOrNull("weight_ounces")
+                    ?: shipping.numberOrNull("weight_oz"),
+                packageLength = shipping.numberOrNull("package_length")
+                    ?: shipping.numberOrNull("length_in"),
+                packageWidth = shipping.numberOrNull("package_width")
+                    ?: shipping.numberOrNull("width_in"),
+                packageHeight = shipping.numberOrNull("package_height")
+                    ?: shipping.numberOrNull("height_in"),
+                packageType = shipping.optString("package_type"),
                 photos = photos,
                 itemSpecifics = specifics
             )
@@ -102,7 +112,14 @@ object BatchImporter {
         if (x.title.length > 80) x.errors += "Title exceeds 80 characters"
         if (x.price == null || x.price!! <= 0.0) x.errors += "Invalid price"
         if (x.quantity <= 0) x.errors += "Invalid quantity"
+        if ((x.weightPounds ?: 0.0) <= 0.0 && (x.weightOunces ?: 0.0) <= 0.0) x.errors += "Missing packed shipping weight"
+        if ((x.packageLength ?: 0.0) <= 0.0) x.errors += "Missing package length"
+        if ((x.packageWidth ?: 0.0) <= 0.0) x.errors += "Missing package width"
+        if ((x.packageHeight ?: 0.0) <= 0.0) x.errors += "Missing package height"
         if (x.photos.isEmpty()) x.errors += "No photos"
         x.photos.forEach { if (!File(x.folder, it).exists()) x.errors += "Missing photo: $it" }
     }
+
+    private fun JSONObject.numberOrNull(key: String): Double? =
+        if (has(key) && !isNull(key)) optDouble(key).takeUnless { it.isNaN() } else null
 }
