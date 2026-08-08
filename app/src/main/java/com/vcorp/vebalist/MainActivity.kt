@@ -19,6 +19,7 @@ class MainActivity : AppCompatActivity() {
     private var returns = listOf<EbayPolicy>()
     private var fulfillment = listOf<EbayPolicy>()
     private var locations = listOf<EbayLocation>()
+    private val operationalErrors = mutableListOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,7 +66,15 @@ class MainActivity : AppCompatActivity() {
         AppPrefs.setBackendUrl(this,url); AppPrefs.setApiKey(this,key); b.statusText.text="Testing backend…"
         thread {
             val r=BackendClient.ping(url,key)
-            runOnUiThread { b.statusText.text=if(r.first)"✓ Backend connected" else "Backend error: ${r.second}" }
+            runOnUiThread {
+                if (r.first) {
+                    b.statusText.text="✓ Connected securely — now load your eBay setup"
+                    b.stepProgress.progress=1
+                } else {
+                    recordError("Connection", r.second)
+                    b.statusText.text="Could not connect. Export the error log if you need help."
+                }
+            }
         }
     }
 
@@ -89,7 +98,10 @@ class MainActivity : AppCompatActivity() {
                     setSpinner(b.locationSpinner,locations.map{"${it.name} — ${it.key}"})
                     b.statusText.text="✓ eBay setup loaded"
                 }
-            } catch(e:Exception){ runOnUiThread{b.statusText.text="eBay setup error: ${e.message}"} }
+            } catch(e:Exception){ runOnUiThread{
+                recordError("Load eBay setup", e.message)
+                b.statusText.text="Could not load eBay setup. Export the error log if you need help."
+            } }
         }
     }
 
@@ -152,7 +164,7 @@ class MainActivity : AppCompatActivity() {
             try {
                 BatchExporter.write(this,data?.data?:return,listings)
                 toast("Batch ZIP saved. No API call was used.")
-            } catch(e:Exception){ toast("Unable to save batch: ${e.message}") }
+            } catch(e:Exception){ recordError("Save batch", e.message); toast("Unable to save batch: ${e.message}") }
             return
         }
         if(requestCode==1004 && resultCode==Activity.RESULT_OK){
@@ -166,7 +178,7 @@ class MainActivity : AppCompatActivity() {
         }
         if(requestCode!=1001||resultCode!=Activity.RESULT_OK)return
         try{listings=BatchImporter.importZip(this,data?.data?:return).toMutableList();show()}
-        catch(e:Exception){b.statusText.text="Import failed: ${e.message}"}
+        catch(e:Exception){recordError("Import batch", e.message);b.statusText.text="Import failed. Export the error log if you need help."}
     }
 
     private fun saveBatch() {
@@ -189,7 +201,15 @@ class MainActivity : AppCompatActivity() {
     private fun buildErrorLog(): String = buildString {
         appendLine("VEbalist error report")
         appendLine("Created: ${java.util.Date()}")
+        appendLine("App version: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
+        appendLine("Android: ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})")
+        appendLine("Device: ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}")
+        appendLine("Service: ${baseUrl().ifBlank { "Not configured" }}")
         appendLine("Listings: ${listings.size}")
+        appendLine()
+        appendLine("App events:")
+        if (operationalErrors.isEmpty()) appendLine("No app-level errors recorded in this session.")
+        operationalErrors.forEach { appendLine("- $it") }
         appendLine()
         if(listings.isEmpty()) appendLine("No listings have been imported.")
         listings.forEachIndexed { index,x ->
@@ -402,7 +422,10 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 }
-            }catch(e:Exception){items.forEach{it.publishState=PublishState.FAILED;it.publishError=e.message}}
+            }catch(e:Exception){
+                items.forEach{it.publishState=PublishState.FAILED;it.publishError=e.message}
+                runOnUiThread { recordError("Publish listings", e.message) }
+            }
             runOnUiThread{show()}
         }
     }
@@ -418,8 +441,14 @@ class MainActivity : AppCompatActivity() {
             else->4
         }
         b.statusText.text="Step $step of 4 — ${listings.size} listings • $ready ready • $published published • $failed failed"
+        b.stepProgress.progress=step
         b.publishReadyButton.isEnabled=listings.any{it.selected&&it.ready&&it.publishState!=PublishState.PUBLISHED}
         b.retryFailedButton.isEnabled=failed>0
+        b.errorSummary.text=when {
+            failed>0 -> "$failed listing(s) failed. Export the error log for a safe support report, then retry."
+            operationalErrors.isNotEmpty() -> "A problem was recorded. Export the error log for a safe support report."
+            else -> "Need help? Export a safe diagnostic report. Passwords and keys are never included."
+        }
         val rows=listings.mapIndexed{i,x->
             val mark=if(x.selected)"☑" else "☐"
             val state=when(x.publishState){
@@ -435,4 +464,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun toast(s:String)=Toast.makeText(this,s,Toast.LENGTH_LONG).show()
+
+    private fun recordError(action:String, message:String?) {
+        val safeMessage=message?.take(1000)?.ifBlank { "Unknown error" } ?: "Unknown error"
+        operationalErrors += "${java.util.Date()}: $action — $safeMessage"
+        if (::b.isInitialized) {
+            b.errorSummary.text="A problem was recorded. Tap Export error log for a safe support report."
+        }
+    }
 }
