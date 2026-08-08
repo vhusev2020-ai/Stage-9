@@ -22,10 +22,11 @@ android {
         applicationId = "com.vcorp.vebalist"
         minSdk = 26
         targetSdk = 35
-        versionCode = 203
-        versionName = "2.0.3"
+        versionCode = 204
+        versionName = "2.0.4"
 
         val backendUrl = (System.getenv("VEBALIST_BACKEND_URL")
+            ?.takeUnless { it.isBlank() }
             ?: "https://vebalist-backend-v4hce575va-ue.a.run.app")
             .trim()
             .trimEnd('/')
