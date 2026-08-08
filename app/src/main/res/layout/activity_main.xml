@@ -1,63 +1,236 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="match_parent"
-    android:orientation="vertical" android:padding="14dp">
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F6F7F9"
+    android:fillViewport="true">
 
-    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:text="VEbalist" android:textStyle="bold" android:textSize="26sp"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
 
-    <TextView android:id="@+id/statusText" android:layout_width="match_parent"
-        android:layout_height="wrap_content" android:text="Configure backend, then import a batch."
-        android:paddingBottom="8dp"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="VEbalist"
+            android:textColor="#111827"
+            android:textSize="30sp"
+            android:textStyle="bold" />
 
-    <EditText android:id="@+id/backendUrl" android:layout_width="match_parent"
-        android:layout_height="wrap_content" android:hint="Secure backend URL (https://...)"
-        android:inputType="textUri"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="Create and publish eBay listings in four simple steps"
+            android:textColor="#64748B"
+            android:textSize="15sp" />
 
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal">
-        <Button android:id="@+id/saveBackendButton" android:layout_width="0dp"
-            android:layout_height="wrap_content" android:layout_weight="1" android:text="Test Backend"/>
-        <Button android:id="@+id/loadEbaySetupButton" android:layout_width="0dp"
-            android:layout_height="wrap_content" android:layout_weight="1" android:text="Load eBay Setup"/>
+        <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:id="@+id/stepProgress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:max="4"
+            android:progress="1"
+            app:indicatorColor="#0F766E"
+            app:trackColor="#DDE5E7"
+            app:trackThickness="8dp" />
+
+        <TextView
+            android:id="@+id/statusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/status_background"
+            android:padding="12dp"
+            android:text="Step 1 of 4 — Connect VEbalist"
+            android:textColor="#134E4A"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="1dp"
+            app:strokeColor="#DCE3E8"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView style="@style/VEbalistStepTitle" android:text="1  Connect" />
+                <TextView style="@style/VEbalistStepHelp" android:text="Enter your app access key once, then load your saved eBay policies." />
+
+                <EditText
+                    android:id="@+id/backendUrl"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Google Cloud service address"
+                    android:inputType="textUri"
+                    android:singleLine="true" />
+
+                <EditText
+                    android:id="@+id/backendApiKey"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="App access key"
+                    android:importantForAutofill="no"
+                    android:inputType="textPassword"
+                    android:singleLine="true" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/saveBackendButton"
+                    style="@style/VEbalistPrimaryButton"
+                    android:text="Connect securely" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/loadEbaySetupButton"
+                    style="@style/VEbalistSecondaryButton"
+                    android:text="Load my eBay setup" />
+
+                <TextView style="@style/VEbalistFieldLabel" android:text="Payment policy" />
+                <Spinner android:id="@+id/paymentSpinner" style="@style/VEbalistSpinner" />
+                <TextView style="@style/VEbalistFieldLabel" android:text="Return policy" />
+                <Spinner android:id="@+id/returnSpinner" style="@style/VEbalistSpinner" />
+                <TextView style="@style/VEbalistFieldLabel" android:text="Shipping policy" />
+                <Spinner android:id="@+id/fulfillmentSpinner" style="@style/VEbalistSpinner" />
+                <TextView style="@style/VEbalistFieldLabel" android:text="Item location" />
+                <Spinner android:id="@+id/locationSpinner" style="@style/VEbalistSpinner" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="1dp"
+            app:strokeColor="#DCE3E8"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView style="@style/VEbalistStepTitle" android:text="2  Add listings" />
+                <TextView style="@style/VEbalistStepHelp" android:text="Import a batch ZIP made from your ChatGPT pictures and details, or start one listing manually." />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/importButton"
+                    style="@style/VEbalistPrimaryButton"
+                    android:text="Choose ChatGPT batch ZIP" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/newListingButton"
+                    style="@style/VEbalistSecondaryButton"
+                    android:text="Create a new listing" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/addPicturesButton"
+                    style="@style/VEbalistSecondaryButton"
+                    android:text="Add pictures to selected listing" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="1dp"
+            app:strokeColor="#DCE3E8"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView style="@style/VEbalistStepTitle" android:text="3  Review details" />
+                <TextView style="@style/VEbalistStepHelp" android:text="Tap to select. Press and hold a listing to edit pictures, category, weight, dimensions, and all other details." />
+
+                <com.google.android.material.button.MaterialButton android:id="@+id/applyDefaultsButton" style="@style/VEbalistSecondaryButton" android:text="Apply my eBay policies" />
+                <com.google.android.material.button.MaterialButton android:id="@+id/validateAspectsButton" style="@style/VEbalistSecondaryButton" android:text="Check all required details" />
+                <com.google.android.material.button.MaterialButton android:id="@+id/fillMissingButton" style="@style/VEbalistSecondaryButton" android:text="Fix missing details" />
+                <com.google.android.material.button.MaterialButton android:id="@+id/testListingButton" style="@style/VEbalistSecondaryButton" android:text="Run final eBay check" />
+
+                <ListView
+                    android:id="@+id/listView"
+                    android:layout_width="match_parent"
+                    android:layout_height="280dp"
+                    android:choiceMode="multipleChoice"
+                    android:divider="#E5E7EB"
+                    android:dividerHeight="1dp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="1dp"
+            app:strokeColor="#DCE3E8"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView style="@style/VEbalistStepTitle" android:text="4  Publish" />
+                <TextView style="@style/VEbalistStepHelp" android:text="Only selected listings that pass every check are sent to eBay." />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/publishReadyButton"
+                    style="@style/VEbalistPrimaryButton"
+                    android:enabled="false"
+                    android:text="Publish selected listings" />
+
+                <com.google.android.material.button.MaterialButton android:id="@+id/retryFailedButton" style="@style/VEbalistSecondaryButton" android:enabled="false" android:text="Retry failed listings" />
+                <com.google.android.material.button.MaterialButton android:id="@+id/historyButton" style="@style/VEbalistSecondaryButton" android:text="View publishing history" />
+
+                <TextView
+                    android:id="@+id/errorSummary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="If something goes wrong, export a safe diagnostic report to share for support. Passwords and keys are never included."
+                    android:textColor="#7C2D12"
+                    android:textSize="14sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/exportErrorLogButton"
+                    style="@style/VEbalistErrorButton"
+                    android:text="Export error log" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/exportBatchButton"
+                    style="@style/VEbalistSecondaryButton"
+                    android:text="Save corrected batch ZIP" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:gravity="center"
+            android:paddingBottom="18dp"
+            android:text="Your eBay credentials stay in Google Cloud and are never written to exported files."
+            android:textColor="#64748B"
+            android:textSize="12sp" />
     </LinearLayout>
-
-    <Spinner android:id="@+id/paymentSpinner" android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
-    <Spinner android:id="@+id/returnSpinner" android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
-    <Spinner android:id="@+id/fulfillmentSpinner" android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
-    <Spinner android:id="@+id/locationSpinner" android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
-
-    <Button android:id="@+id/applyDefaultsButton" android:layout_width="match_parent"
-        android:layout_height="wrap_content" android:text="Apply eBay Defaults to Batch"/>
-
-    <Button android:id="@+id/importButton" android:layout_width="match_parent"
-        android:layout_height="wrap_content" android:text="Import ChatGPT Batch ZIP"/>
-
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal">
-        <Button android:id="@+id/validateAspectsButton" android:layout_width="0dp"
-            android:layout_height="wrap_content" android:layout_weight="1" android:text="Validate eBay Fields"/>
-        <Button android:id="@+id/publishReadyButton" android:layout_width="0dp"
-            android:layout_height="wrap_content" android:layout_weight="1" android:text="Publish Selected"
-            android:enabled="false"/>
-    </LinearLayout>
-
-    <Button android:id="@+id/testListingButton" android:layout_width="match_parent"
-        android:layout_height="wrap_content" android:text="Test First Ready Listing"/>
-
-    <Button android:id="@+id/fillMissingButton" android:layout_width="match_parent"
-        android:layout_height="wrap_content" android:text="Fill Missing eBay Fields"/>
-
-    <Button android:id="@+id/historyButton" android:layout_width="match_parent"
-        android:layout_height="wrap_content" android:text="Published History"/>
-
-    <Button android:id="@+id/retryFailedButton" android:layout_width="match_parent"
-        android:layout_height="wrap_content" android:text="Retry Failed" android:enabled="false"/>
-
-    <ListView android:id="@+id/listView" android:layout_width="match_parent"
-        android:layout_height="0dp" android:layout_weight="1" android:choiceMode="multipleChoice"/>
-</LinearLayout>
+</ScrollView>

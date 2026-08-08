@@ -22,8 +22,17 @@ android {
         applicationId = "com.vcorp.vebalist"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 204
+        versionName = "2.0.4"
+
+        val backendUrl = (System.getenv("VEBALIST_BACKEND_URL")
+            ?.takeUnless { it.isBlank() }
+            ?: "https://vebalist-backend-v4hce575va-ue.a.run.app")
+            .trim()
+            .trimEnd('/')
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+        buildConfigField("String", "BACKEND_URL", "\"$backendUrl\"")
     }
 
     buildTypes {
@@ -37,6 +46,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 
     compileOptions {
