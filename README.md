@@ -12,6 +12,11 @@ and publishing listing batches through the eBay Inventory API.
 4. VEbalist lets you review/correct the listing, loads category-required eBay
    fields, validates it, and publishes it through your authenticated backend.
 
+The Android interface presents this as four guided sections: Connect, Import,
+Review, and Publish. `Export Error Log` saves a shareable text report containing
+validation and publishing failures while intentionally excluding service keys
+and eBay credentials.
+
 ChatGPT prepares the portable file; only VEbalist is authorized to perform the
 eBay validation and publishing actions. The app can also create a listing
 directly or export a corrected batch for reuse. Each listing
