@@ -36,6 +36,7 @@ class MainActivity : AppCompatActivity() {
         b.newListingButton.setOnClickListener { createListing() }
         b.addPicturesButton.setOnClickListener { choosePictures() }
         b.exportBatchButton.setOnClickListener { saveBatch() }
+        b.exportErrorLogButton.setOnClickListener { saveErrorLog() }
 
         b.importButton.setOnClickListener {
             startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
@@ -154,6 +155,15 @@ class MainActivity : AppCompatActivity() {
             } catch(e:Exception){ toast("Unable to save batch: ${e.message}") }
             return
         }
+        if(requestCode==1004 && resultCode==Activity.RESULT_OK){
+            try {
+                contentResolver.openOutputStream(data?.data?:return,"w")?.bufferedWriter()?.use {
+                    it.write(buildErrorLog())
+                }
+                toast("Error log saved.")
+            } catch(e:Exception){ toast("Unable to save error log: ${e.message}") }
+            return
+        }
         if(requestCode!=1001||resultCode!=Activity.RESULT_OK)return
         try{listings=BatchImporter.importZip(this,data?.data?:return).toMutableList();show()}
         catch(e:Exception){b.statusText.text="Import failed: ${e.message}"}
@@ -166,6 +176,32 @@ class MainActivity : AppCompatActivity() {
             type="application/zip"
             putExtra(Intent.EXTRA_TITLE,"VEbalist-batch-${System.currentTimeMillis()}.zip")
         },1003)
+    }
+
+    private fun saveErrorLog() {
+        startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type="text/plain"
+            putExtra(Intent.EXTRA_TITLE,"VEbalist-error-log-${System.currentTimeMillis()}.txt")
+        },1004)
+    }
+
+    private fun buildErrorLog(): String = buildString {
+        appendLine("VEbalist error report")
+        appendLine("Created: ${java.util.Date()}")
+        appendLine("Listings: ${listings.size}")
+        appendLine()
+        if(listings.isEmpty()) appendLine("No listings have been imported.")
+        listings.forEachIndexed { index,x ->
+            appendLine("${index + 1}. ${x.title.ifBlank { "Untitled listing" }}")
+            appendLine("   SKU: ${x.sku.ifBlank { "Not provided" }}")
+            appendLine("   State: ${x.publishState}")
+            if(x.errors.isEmpty() && x.publishError.isNullOrBlank()) appendLine("   No errors")
+            x.errors.forEach { appendLine("   Validation: $it") }
+            x.publishError?.takeIf { it.isNotBlank() }?.let { appendLine("   Publishing: $it") }
+            appendLine()
+        }
+        appendLine("Security note: service keys and eBay credentials are intentionally excluded.")
     }
 
     private fun createListing() {
@@ -375,7 +411,13 @@ class MainActivity : AppCompatActivity() {
         val published=listings.count{it.publishState==PublishState.PUBLISHED}
         val failed=listings.count{it.publishState==PublishState.FAILED}
         val ready=listings.count{it.ready}
-        b.statusText.text="${listings.size} imported • $ready ready • $published published • $failed failed"
+        val step=when {
+            listings.isEmpty()->2
+            listings.any{!it.ready}->3
+            published < listings.size->4
+            else->4
+        }
+        b.statusText.text="Step $step of 4 — ${listings.size} listings • $ready ready • $published published • $failed failed"
         b.publishReadyButton.isEnabled=listings.any{it.selected&&it.ready&&it.publishState!=PublishState.PUBLISHED}
         b.retryFailedButton.isEnabled=failed>0
         val rows=listings.mapIndexed{i,x->
