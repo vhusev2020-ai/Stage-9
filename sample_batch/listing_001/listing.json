@@ -13,10 +13,12 @@
   "upc": "",
   "item_specifics": {},
   "shipping": {
-    "weight_oz": null,
-    "length_in": null,
-    "width_in": null,
-    "height_in": null,
+    "weight_pounds": 1,
+    "weight_ounces": 8,
+    "package_length": 12,
+    "package_width": 9,
+    "package_height": 5,
+    "package_type": "",
     "fulfillment_policy_id": ""
   },
   "payment_policy_id": "",

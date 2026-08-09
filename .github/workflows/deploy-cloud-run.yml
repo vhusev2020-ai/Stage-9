@@ -1,0 +1,57 @@
+name: Deploy backend to Cloud Run
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy-cloud-run.yml"
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: vebalist-production
+  cancel-in-progress: false
+
+env:
+  REGION: ${{ vars.GCP_REGION || 'us-east1' }}
+  SERVICE: ${{ vars.CLOUD_RUN_SERVICE || 'vebalist-backend' }}
+  REPOSITORY: ${{ vars.ARTIFACT_REPOSITORY || 'vebalist' }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - run: gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
+      - name: Build and push backend
+        run: |
+          IMAGE="$REGION-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/$REPOSITORY/backend:${{ github.sha }}"
+          docker build -t "$IMAGE" backend
+          docker push "$IMAGE"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+      - name: Deploy backend
+        run: |
+          gcloud run deploy "$SERVICE" \
+            --project="${{ secrets.GCP_PROJECT_ID }}" \
+            --region="$REGION" \
+            --image="$IMAGE" \
+            --allow-unauthenticated \
+            --port=8080 \
+            --set-secrets="EBAY_CLIENT_ID=EBAY_CLIENT_ID:latest,EBAY_CLIENT_SECRET=EBAY_CLIENT_SECRET:latest,EBAY_REFRESH_TOKEN=EBAY_REFRESH_TOKEN:latest,EBAY_REFRESH_SCOPES=EBAY_REFRESH_SCOPES:latest,VEBALIST_API_KEY=VEBALIST_API_KEY:latest" \
+            --set-env-vars="EBAY_MARKETPLACE_ID=EBAY_US" \
+            --quiet
+      - name: Verify deployment
+        run: |
+          URL="$(gcloud run services describe "$SERVICE" --project="${{ secrets.GCP_PROJECT_ID }}" --region="$REGION" --format='value(status.url)')"
+          curl --fail --retry 8 --retry-delay 5 "$URL/healthz"
+          echo "Set the GitHub repository variable VEBALIST_BACKEND_URL to: $URL"

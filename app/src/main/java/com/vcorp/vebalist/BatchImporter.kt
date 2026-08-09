@@ -35,6 +35,7 @@ object BatchImporter {
         val batchFile = File(work, "batch.json")
         require(batchFile.exists()) { "batch.json not found in ZIP." }
         val batch = JSONObject(batchFile.readText())
+        val batchVersion = batch.optInt("batch_version", 1)
         val items = batch.optJSONArray("listings")
             ?: throw IllegalArgumentException("No listings in batch.json")
         val result = mutableListOf<Listing>()
@@ -46,6 +47,8 @@ object BatchImporter {
             if (!listingFile.exists()) continue
             val j = JSONObject(listingFile.readText())
             val shipping = j.optJSONObject("shipping") ?: JSONObject()
+            val research = j.optJSONObject("market_research") ?: JSONObject()
+            val policy = j.optJSONObject("policy_review") ?: JSONObject()
 
             val photos = mutableListOf<String>()
             j.optJSONArray("photos")?.let { a ->
@@ -67,6 +70,15 @@ object BatchImporter {
                 }
             }
 
+            val researchSources = mutableListOf<String>()
+            research.optJSONArray("sources")?.let { a ->
+                for (p in 0 until a.length()) researchSources += a.getString(p)
+            }
+            val policyWarnings = mutableListOf<String>()
+            policy.optJSONArray("warnings")?.let { a ->
+                for (p in 0 until a.length()) policyWarnings += a.getString(p)
+            }
+
             val x = Listing(
                 folder = folder.absolutePath,
                 sku = j.optString("sku"),
@@ -81,8 +93,27 @@ object BatchImporter {
                 returnPolicyId = j.optString("return_policy_id"),
                 fulfillmentPolicyId = shipping.optString("fulfillment_policy_id"),
                 inventoryLocationKey = j.optString("inventory_location_key"),
+                weightPounds = shipping.numberOrNull("weight_pounds"),
+                weightOunces = shipping.numberOrNull("weight_ounces")
+                    ?: shipping.numberOrNull("weight_oz"),
+                packageLength = shipping.numberOrNull("package_length")
+                    ?: shipping.numberOrNull("length_in"),
+                packageWidth = shipping.numberOrNull("package_width")
+                    ?: shipping.numberOrNull("width_in"),
+                packageHeight = shipping.numberOrNull("package_height")
+                    ?: shipping.numberOrNull("height_in"),
+                packageType = shipping.optString("package_type"),
                 photos = photos,
-                itemSpecifics = specifics
+                itemSpecifics = specifics,
+                researchRequired = batchVersion >= 3,
+                marketResearchCheckedAt = research.optString("checked_at"),
+                comparablePriceLow = research.numberOrNull("comparable_price_low"),
+                comparablePriceHigh = research.numberOrNull("comparable_price_high"),
+                comparableSources = researchSources,
+                researchNotes = research.optString("notes"),
+                publishAllowed = if (policy.has("publish_allowed")) policy.optBoolean("publish_allowed") else batchVersion < 3,
+                policyBlockReason = policy.optString("block_reason"),
+                policyWarnings = policyWarnings
             )
             validateBase(x)
             result += x
@@ -102,7 +133,20 @@ object BatchImporter {
         if (x.title.length > 80) x.errors += "Title exceeds 80 characters"
         if (x.price == null || x.price!! <= 0.0) x.errors += "Invalid price"
         if (x.quantity <= 0) x.errors += "Invalid quantity"
+        if ((x.weightPounds ?: 0.0) <= 0.0 && (x.weightOunces ?: 0.0) <= 0.0) x.errors += "Missing packed shipping weight"
+        if ((x.packageLength ?: 0.0) <= 0.0) x.errors += "Missing package length"
+        if ((x.packageWidth ?: 0.0) <= 0.0) x.errors += "Missing package width"
+        if ((x.packageHeight ?: 0.0) <= 0.0) x.errors += "Missing package height"
         if (x.photos.isEmpty()) x.errors += "No photos"
         x.photos.forEach { if (!File(x.folder, it).exists()) x.errors += "Missing photo: $it" }
+        if (x.researchRequired && x.marketResearchCheckedAt.isBlank())
+            x.errors += "Comparable-listing research not completed"
+        if (x.researchRequired && x.comparableSources.isEmpty())
+            x.errors += "Comparable-listing sources are missing"
+        if (!x.publishAllowed)
+            x.errors += "Policy block: ${x.policyBlockReason.ifBlank { "Item is not approved for publication" }}"
     }
+
+    private fun JSONObject.numberOrNull(key: String): Double? =
+        if (has(key) && !isNull(key)) optDouble(key).takeUnless { it.isNaN() } else null
 }

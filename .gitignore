@@ -1,0 +1,14 @@
+.gradle/
+build/
+app/build/
+local.properties
+*.jks
+*.keystore
+backend/.venv/
+backend/__pycache__/
+backend/**/*.pyc
+desktop-photo-editor/.venv/
+desktop-photo-editor/__pycache__/
+desktop-photo-editor/**/*.pyc
+.env
+.DS_Store

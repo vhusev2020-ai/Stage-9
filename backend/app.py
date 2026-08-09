@@ -1,4 +1,4 @@
-import os, time, base64, tempfile, requests
+import os, time, base64, tempfile, requests, hmac
 from urllib.parse import quote
 from flask import Flask, request, jsonify
 
@@ -11,6 +11,22 @@ LOCATION_KEY=os.getenv("EBAY_LOCATION_KEY","vebalist-40517")
 LOCATION_POSTAL_CODE=os.getenv("EBAY_LOCATION_POSTAL_CODE","40517")
 LOCATION_COUNTRY=os.getenv("EBAY_LOCATION_COUNTRY","US")
 _cache={"token":None,"expires":0}
+
+@app.get("/healthz")
+def healthz():
+    return jsonify(ok=True,service="vebalist-backend")
+
+@app.before_request
+def require_app_key():
+    if request.path == "/healthz":
+        return None
+    expected=os.getenv("VEBALIST_API_KEY","")
+    supplied=request.headers.get("X-VEbalist-Key","")
+    if not expected:
+        return jsonify(ok=False,error="Server API key is not configured"),503
+    if not hmac.compare_digest(supplied,expected):
+        return jsonify(ok=False,error="Unauthorized"),401
+    return None
 
 def access_token():
     now=time.time()
@@ -207,6 +223,9 @@ def publish_offer(offer_id):
 
 
 def validate_listing_payload(item):
+    policy=item.get("policy_review",{})
+    if policy.get("publish_allowed") is False:
+        return False, "Policy block: " + (policy.get("block_reason") or "Item is not approved for publication")
     required = [
         "sku","title","description","category_id","condition","price","quantity",
         "payment_policy_id","return_policy_id","inventory_location_key"
