@@ -11,9 +11,11 @@ class BackendTests(unittest.TestCase):
         self.client = app.test_client()
 
     def test_health_does_not_require_ebay_credentials(self):
-        response = self.client.get("/healthz")
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.get_json()["service"], "vebalist-backend")
+        for path in ("/health", "/healthz"):
+            with self.subTest(path=path):
+                response = self.client.get(path)
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.get_json()["service"], "vebalist-backend")
 
     def test_validation_rejects_incomplete_listing(self):
         response = self.client.post(

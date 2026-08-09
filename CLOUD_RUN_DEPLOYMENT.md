@@ -41,5 +41,5 @@ Pushes affecting `backend/` deploy automatically. APK builds use
 
 The unauthenticated Cloud Run URL is required because the Android client does
 not currently send Cloud Run identity tokens. All application API routes are
-still protected by `X-VEbalist-Key`; only `/healthz` is public. eBay
+still protected by `X-VEbalist-Key`; only `/health` and `/healthz` are public. eBay
 credentials remain server side in Secret Manager.

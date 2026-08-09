@@ -12,13 +12,14 @@ LOCATION_POSTAL_CODE=os.getenv("EBAY_LOCATION_POSTAL_CODE","40517")
 LOCATION_COUNTRY=os.getenv("EBAY_LOCATION_COUNTRY","US")
 _cache={"token":None,"expires":0}
 
+@app.get("/health")
 @app.get("/healthz")
 def healthz():
     return jsonify(ok=True,service="vebalist-backend")
 
 @app.before_request
 def require_app_key():
-    if request.path == "/healthz":
+    if request.path in ("/health", "/healthz"):
         return None
     expected=os.getenv("VEBALIST_API_KEY","")
     supplied=request.headers.get("X-VEbalist-Key","")
