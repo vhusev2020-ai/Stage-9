@@ -1,7 +1,7 @@
 import unittest
 import os
 
-from app import app
+from app import app, ebay_condition
 
 
 class BackendTests(unittest.TestCase):
@@ -31,6 +31,19 @@ class BackendTests(unittest.TestCase):
     def test_protected_routes_require_app_key(self):
         response = self.client.get("/api/status")
         self.assertEqual(response.status_code, 401)
+
+    def test_preowned_apparel_uses_accepted_ebay_condition(self):
+        for source_condition in ("USED_EXCELLENT", "USED_VERY_GOOD", "USED_GOOD", "USED_ACCEPTABLE"):
+            with self.subTest(source_condition=source_condition):
+                self.assertEqual(
+                    ebay_condition({"category_id": "53159", "condition": source_condition}),
+                    "USED_EXCELLENT",
+                )
+
+        self.assertEqual(
+            ebay_condition({"category_id": "15559", "condition": "NEW_OTHER"}),
+            "NEW_OTHER",
+        )
 
 
 if __name__ == "__main__":

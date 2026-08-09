@@ -150,16 +150,24 @@ def upload_image(photo):
         try: os.remove(path)
         except OSError: pass
 
+APPAREL_PREOWNED_CONDITION_CATEGORIES={"15709","53159"}
+
+def ebay_condition(item):
+    condition=str(item.get("condition") or "")
+    category_id=str(item.get("category_id") or "")
+    # eBay's apparel categories use Inventory API enum USED_EXCELLENT (ID
+    # 3000) for the buyer-facing "Pre-owned" condition. More precise wear
+    # details remain in conditionDescription; IDs 4000-6000 are rejected for
+    # these categories even when the source batch says very-good/good/acceptable.
+    if category_id in APPAREL_PREOWNED_CONDITION_CATEGORIES and condition.startswith("USED_"):
+        return "USED_EXCELLENT"
+    return condition
+
 def create_inventory(item,image_urls):
     shipping=item.get("shipping",{})
     pounds=float(shipping.get("weight_pounds") or 0)
     ounces=float(shipping.get("weight_ounces") or 0)
-    condition=item["condition"]
-    # Men's Athletic Shoes uses eBay's apparel condition mapping, where
-    # USED_EXCELLENT (ID 3000) is displayed as "Pre-owned - Good". Older
-    # VEbalist batches used USED_GOOD (ID 5000), which eBay rejects here.
-    if str(item.get("category_id")) == "15709" and condition == "USED_GOOD":
-        condition="USED_EXCELLENT"
+    condition=ebay_condition(item)
     payload={
         "availability":{"shipToLocationAvailability":{"quantity":int(item.get("quantity",1))}},
         "condition":condition,
