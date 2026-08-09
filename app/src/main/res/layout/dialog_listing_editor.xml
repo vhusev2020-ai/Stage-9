@@ -12,6 +12,15 @@
         <EditText android:id="@+id/editCategory" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Category ID"/>
         <EditText android:id="@+id/editCondition" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Condition"/>
         <EditText android:id="@+id/editDescription" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Description" android:minLines="5" android:gravity="top"/>
+        <EditText android:id="@+id/editQuantity" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Quantity" android:inputType="number"/>
+        <EditText android:id="@+id/editConditionDescription" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Condition details"/>
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Packed shipping size" android:textStyle="bold" android:paddingTop="12dp"/>
+        <EditText android:id="@+id/editWeightPounds" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Weight — pounds" android:inputType="numberDecimal"/>
+        <EditText android:id="@+id/editWeightOunces" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Weight — ounces" android:inputType="numberDecimal"/>
+        <EditText android:id="@+id/editPackageLength" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Length — inches" android:inputType="numberDecimal"/>
+        <EditText android:id="@+id/editPackageWidth" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Width — inches" android:inputType="numberDecimal"/>
+        <EditText android:id="@+id/editPackageHeight" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Height — inches" android:inputType="numberDecimal"/>
+        <EditText android:id="@+id/editPackageType" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Package type (optional, e.g. PACKAGE_THICK_ENVELOPE)"/>
         <EditText android:id="@+id/editPayment" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Payment Policy ID"/>
         <EditText android:id="@+id/editReturn" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Return Policy ID"/>
         <EditText android:id="@+id/editFulfillment" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Fulfillment Policy ID"/>
