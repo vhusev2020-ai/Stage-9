@@ -10,6 +10,9 @@
         android:layout_height="wrap_content" android:text="Configure backend, then import a batch."
         android:paddingBottom="8dp"/>
 
+    <Button android:id="@+id/localInventoryButton" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:text="Open Local Inventory (works offline)"/>
+
     <EditText android:id="@+id/backendUrl" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:hint="Secure backend URL (https://...)"
         android:inputType="textUri"/>
@@ -26,18 +29,13 @@
             android:layout_height="wrap_content" android:layout_weight="1" android:text="Load eBay Setup"/>
     </LinearLayout>
 
-    <Spinner android:id="@+id/paymentSpinner" android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
-    <Spinner android:id="@+id/returnSpinner" android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
-    <Spinner android:id="@+id/fulfillmentSpinner" android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
-    <Spinner android:id="@+id/locationSpinner" android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+    <Spinner android:id="@+id/paymentSpinner" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+    <Spinner android:id="@+id/returnSpinner" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+    <Spinner android:id="@+id/fulfillmentSpinner" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+    <Spinner android:id="@+id/locationSpinner" android:layout_width="match_parent" android:layout_height="wrap_content"/>
 
     <Button android:id="@+id/applyDefaultsButton" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:text="Apply eBay Defaults to Batch"/>
-
     <Button android:id="@+id/importButton" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:text="Import ChatGPT Batch ZIP"/>
 
@@ -52,13 +50,10 @@
 
     <Button android:id="@+id/testListingButton" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:text="Test First Ready Listing"/>
-
     <Button android:id="@+id/fillMissingButton" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:text="Fill Missing eBay Fields"/>
-
     <Button android:id="@+id/historyButton" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:text="Published History"/>
-
     <Button android:id="@+id/retryFailedButton" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:text="Retry Failed" android:enabled="false"/>
 
