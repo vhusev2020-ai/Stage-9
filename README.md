@@ -31,3 +31,7 @@ This branch is a safety review of Stage 9. The original Stage 9 branch remains u
 The backend access key is a practical first access gate, not a full user identity system. Anyone who can extract the key from a device where it is entered may be able to reuse it. Use a unique staging key, restrict access to the staging service where possible, and rotate the key if the device is lost or access changes. A stronger multi-user identity gateway should be considered before broad release.
 
 The `VEBALIST_ALLOW_PUBLISH` switch is a server-side safety gate, not an eBay sandbox. If real eBay OAuth credentials are configured, read-only account and validation endpoints can still contact the live eBay account. No live listing should be published during the current safety-review stage.
+
+## Product direction
+
+See [VEbalist OS roadmap](VEbalist_OS_ROADMAP.md) for the free-first plan to evolve this eBay listing prototype into a local-first resale-business operating system. The roadmap is aspirational; features are not implemented until verified in the app.
