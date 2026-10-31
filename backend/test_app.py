@@ -1,5 +1,6 @@
 import os
 import unittest
+from unittest.mock import patch
 
 os.environ["VEBALIST_API_KEY"] = "test-only-key"
 os.environ["VEBALIST_ALLOW_PUBLISH"] = "false"
@@ -25,6 +26,22 @@ class SafetyGateTests(unittest.TestCase):
         # a non-401 response proves the access gate accepted the key.
         response = self.client.get("/api/status", headers={"X-VEbalist-Key": "test-only-key"})
         self.assertNotEqual(response.status_code, 401)
+
+    @patch("app.ensure_inventory_location")
+    @patch("app.ebay_get")
+    def test_account_setup_does_not_create_inventory_location(self, ebay_get, ensure_location):
+        ebay_get.side_effect = [
+            {"paymentPolicies": []},
+            {"returnPolicies": []},
+            {"fulfillmentPolicies": []},
+            {"locations": []},
+        ]
+        response = self.client.get(
+            "/api/ebay/account-setup",
+            headers={"X-VEbalist-Key": "test-only-key"},
+        )
+        self.assertEqual(response.status_code, 200)
+        ensure_location.assert_not_called()
 
     def test_publish_is_disabled_by_default(self):
         response = self.client.post(
