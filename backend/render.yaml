@@ -15,3 +15,7 @@ services:
         sync: false
       - key: EBAY_REFRESH_SCOPES
         sync: false
+      - key: VEBALIST_API_KEY
+        sync: false
+      - key: VEBALIST_ALLOW_PUBLISH
+        value: "false"
