@@ -24,6 +24,7 @@ class MainActivity : AppCompatActivity() {
         b = ActivityMainBinding.inflate(layoutInflater); setContentView(b.root)
         b.backendUrl.setText(AppPrefs.getBackendUrl(this))
 
+        b.localInventoryButton.setOnClickListener { startActivity(Intent(this, LocalInventoryActivity::class.java)) }
         b.saveBackendButton.setOnClickListener { testBackend() }
         b.loadEbaySetupButton.setOnClickListener { loadEbaySetup() }
         b.applyDefaultsButton.setOnClickListener { applyDefaults() }
@@ -49,13 +50,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun baseUrl(): String = b.backendUrl.text.toString().trim().trimEnd('/')
+    private fun apiKey(): String = b.backendApiKey.text.toString().trim()
+    private fun requireAccessKey(): Boolean {
+        if (apiKey().isBlank()) { toast("Enter the backend access key first."); return false }
+        return true
+    }
 
     private fun testBackend() {
         val url=baseUrl()
         if(!url.startsWith("https://")) { toast("Backend URL must start with https://"); return }
+        if (!requireAccessKey()) return
+        val key = apiKey()
         AppPrefs.setBackendUrl(this,url); b.statusText.text="Testing backend…"
         thread {
-            val r=BackendClient.ping(url)
+            val r=BackendClient.ping(url,key)
             runOnUiThread { b.statusText.text=if(r.first)"✓ Backend connected" else "Backend error: ${r.second}" }
         }
     }
@@ -63,10 +71,12 @@ class MainActivity : AppCompatActivity() {
     private fun loadEbaySetup() {
         val url=baseUrl()
         if(!url.startsWith("https://")) { toast("Configure backend first."); return }
+        if(!requireAccessKey()) return
+        val key = apiKey()
         b.statusText.text="Loading eBay policies and locations…"
         thread {
             try {
-                val j=BackendClient.loadAccountSetup(url)
+                val j=BackendClient.loadAccountSetup(url,key)
                 payments=parsePolicies(j,"paymentPolicies","paymentPolicyId")
                 returns=parsePolicies(j,"returnPolicies","returnPolicyId")
                 fulfillment=parsePolicies(j,"fulfillmentPolicies","fulfillmentPolicyId")
@@ -112,12 +122,15 @@ class MainActivity : AppCompatActivity() {
 
     private fun validateAllAspects() {
         val url=baseUrl()
+        if(!url.startsWith("https://")) { toast("Backend URL must start with https://"); return }
+        if(!requireAccessKey()) return
+        val key = apiKey()
         if(listings.isEmpty()){toast("Import a batch first.");return}
         b.statusText.text="Checking category-specific eBay fields…"
         thread {
             listings.forEach { x ->
                 try {
-                    val aspects=BackendClient.loadAspects(url,x.categoryId)
+                    val aspects=BackendClient.loadAspects(url,x.categoryId,key)
                     val missing=aspects.filter{it.required && x.itemSpecifics[it.name].isNullOrEmpty()}
                     x.errors.removeAll{it.startsWith("Missing eBay aspect:")}
                     missing.forEach{x.errors+="Missing eBay aspect: ${it.name}"}
@@ -161,11 +174,13 @@ class MainActivity : AppCompatActivity() {
             ?: run { toast("No ready listing available for test."); return }
         val url = baseUrl()
         if (!url.startsWith("https://")) { toast("Configure backend first."); return }
+        if (!requireAccessKey()) return
+        val key = apiKey()
 
         b.statusText.text = "Testing first ready listing against eBay requirements…"
         thread {
             try {
-                val result = BackendClient.validateOnly(url, x)
+                val result = BackendClient.validateOnly(url, x,key)
                 runOnUiThread {
                     if (result.optBoolean("ok")) {
                         b.statusText.text = "✓ Test passed for ${x.title}"
@@ -188,9 +203,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         val url = baseUrl()
+        if (!url.startsWith("https://")) { toast("Configure backend first."); return }
+        if (!requireAccessKey()) return
+        val key = apiKey()
         thread {
             try {
-                val aspects = BackendClient.loadAspects(url, target.categoryId)
+                val aspects = BackendClient.loadAspects(url, target.categoryId,key)
                 val missing = aspects.filter { it.required && target.itemSpecifics[it.name].isNullOrEmpty() }
                 runOnUiThread {
                     if (missing.isEmpty()) {
@@ -260,11 +278,23 @@ class MainActivity : AppCompatActivity() {
 
     private fun publishItems(items:List<Listing>){
         if(items.isEmpty()){toast("No ready listings selected.");return}
+        if(items.size != 1){toast("Safety mode allows one listing at a time.");return}
         val url=baseUrl(); if(!url.startsWith("https://")){toast("Configure backend first.");return}
+        if(!requireAccessKey()) return
+        val item=items.first()
+        AlertDialog.Builder(this)
+            .setTitle("Confirm eBay publication")
+            .setMessage("Publish one real eBay listing?\n\n" + item.title + "\nPrice: $" + (item.price ?: 0.0) + "\nSKU: " + item.sku + "\n\nContinue only if the details are correct.")
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Publish this one item") { _, _ -> performPublishItems(items,url,apiKey()) }
+            .show()
+    }
+
+    private fun performPublishItems(items:List<Listing>,url:String,key:String){
         items.forEach{it.publishState=PublishState.PUBLISHING};show()
         thread{
             try{
-                BackendClient.publish(url,items).forEach{r->
+                BackendClient.publish(url,items,key).forEach{r->
                     listings.firstOrNull{it.sku==r.sku}?.let{x->
                         if(r.ok){
                             x.publishState=PublishState.PUBLISHED;x.listingId=r.listingId;x.publishError=null

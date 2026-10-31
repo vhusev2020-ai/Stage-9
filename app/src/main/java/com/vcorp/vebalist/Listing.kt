@@ -20,7 +20,13 @@ data class Listing(
     val errors: MutableList<String> = mutableListOf(),
     var publishState: PublishState = PublishState.NOT_PUBLISHED,
     var listingId: String? = null,
-    var publishError: String? = null
+    var publishError: String? = null,
+    var weightPounds: Double? = null,
+    var weightOunces: Double? = null,
+    var packageLength: Double? = null,
+    var packageWidth: Double? = null,
+    var packageHeight: Double? = null,
+    var packageType: String? = null
 ) {
     val ready: Boolean get() = errors.isEmpty()
 }
