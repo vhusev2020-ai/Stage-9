@@ -121,6 +121,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun validateAllAspects() {
         val url=baseUrl()
+        if(!url.startsWith("https://")) { toast("Backend URL must start with https://"); return }
         if(!requireAccessKey()) return
         val key = apiKey()
         if(listings.isEmpty()){toast("Import a batch first.");return}
