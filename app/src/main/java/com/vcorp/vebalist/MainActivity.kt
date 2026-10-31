@@ -197,6 +197,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         val url = baseUrl()
+        if (!url.startsWith("https://")) { toast("Configure backend first."); return }
+        if (!requireAccessKey()) return
         thread {
             try {
                 val aspects = BackendClient.loadAspects(url, target.categoryId,apiKey())
