@@ -82,7 +82,13 @@ object BatchImporter {
                 fulfillmentPolicyId = shipping.optString("fulfillment_policy_id"),
                 inventoryLocationKey = j.optString("inventory_location_key"),
                 photos = photos,
-                itemSpecifics = specifics
+                itemSpecifics = specifics,
+                weightPounds = shipping.optDouble("weight_pounds").takeIf { shipping.has("weight_pounds") && !shipping.isNull("weight_pounds") },
+                weightOunces = shipping.optDouble("weight_ounces").takeIf { shipping.has("weight_ounces") && !shipping.isNull("weight_ounces") },
+                packageLength = shipping.optDouble("package_length").takeIf { shipping.has("package_length") && !shipping.isNull("package_length") },
+                packageWidth = shipping.optDouble("package_width").takeIf { shipping.has("package_width") && !shipping.isNull("package_width") },
+                packageHeight = shipping.optDouble("package_height").takeIf { shipping.has("package_height") && !shipping.isNull("package_height") },
+                packageType = shipping.optString("package_type").takeIf { it.isNotBlank() }
             )
             validateBase(x)
             result += x
