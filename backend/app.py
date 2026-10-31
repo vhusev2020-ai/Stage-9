@@ -1,4 +1,4 @@
-import os, time, base64, tempfile, requests
+import os, time, base64, tempfile, requests, hmac
 from urllib.parse import quote
 from flask import Flask, request, jsonify
 
@@ -11,6 +11,24 @@ LOCATION_KEY=os.getenv("EBAY_LOCATION_KEY","vebalist-40517")
 LOCATION_POSTAL_CODE=os.getenv("EBAY_LOCATION_POSTAL_CODE","40517")
 LOCATION_COUNTRY=os.getenv("EBAY_LOCATION_COUNTRY","US")
 _cache={"token":None,"expires":0}
+
+
+
+@app.before_request
+def require_api_key():
+    # Health checks reveal no account information and remain public.
+    if request.path == "/healthz":
+        return None
+    expected = os.getenv("VEBALIST_API_KEY", "").strip()
+    supplied = request.headers.get("X-VEbalist-Key", "")
+    if not expected:
+        return jsonify(ok=False, error="Backend access is not configured"), 503
+    if not supplied or not hmac.compare_digest(supplied, expected):
+        return jsonify(ok=False, error="Unauthorized"), 401
+
+@app.get("/healthz")
+def healthz():
+    return jsonify(ok=True, service="vebalist-backend")
 
 def access_token():
     now=time.time()
@@ -81,7 +99,7 @@ def account_setup():
         r=ebay_get("/sell/account/v1/return_policy",{"marketplace_id":MARKETPLACE})
         f=ebay_get("/sell/account/v1/fulfillment_policy",{"marketplace_id":MARKETPLACE})
         l=ebay_get("/sell/inventory/v1/location",{"limit":100})
-        locations=ensure_inventory_location(l.get("locations",[]))
+        locations=l.get("locations",[])
         return jsonify(ok=True,
             paymentPolicies=p.get("paymentPolicies",[]),
             returnPolicies=r.get("returnPolicies",[]),
@@ -267,8 +285,16 @@ def validate_listing():
 
 @app.post("/api/publish-batch")
 def publish_batch():
+    if os.getenv("VEBALIST_ALLOW_PUBLISH", "false").strip().lower() not in ("1", "true", "yes"):
+        return jsonify(ok=False, error="Publishing is disabled. Set VEBALIST_ALLOW_PUBLISH=true only after an approved live test."), 403
+    payload=request.get_json(force=True)
+    items=payload.get("items", [])
+    if not isinstance(items, list) or not items:
+        return jsonify(ok=False, error="A non-empty items list is required."), 400
+    if len(items) > 1:
+        return jsonify(ok=False, error="Safety mode permits at most one listing per request."), 400
     results=[]
-    for item in request.get_json(force=True).get("items",[]):
+    for item in items:
         x={"sku":item.get("sku"),"ok":False}
         try:
             valid,error=validate_listing_payload(item)
