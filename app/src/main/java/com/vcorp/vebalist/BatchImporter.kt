@@ -41,8 +41,15 @@ object BatchImporter {
 
         for (i in 0 until items.length()) {
             val folderName = items.getJSONObject(i).optString("folder")
-            val folder = File(work, folderName)
-            val listingFile = File(folder, "listing.json")
+            val folder = File(work, folderName).canonicalFile
+            val workRoot = work.canonicalFile
+            require(folder.path.startsWith(workRoot.path + File.separator)) {
+                "Unsafe listing folder path: $folderName"
+            }
+            val listingFile = File(folder, "listing.json").canonicalFile
+            require(listingFile.path.startsWith(folder.path + File.separator)) {
+                "Unsafe listing file path."
+            }
             if (!listingFile.exists()) continue
             val j = JSONObject(listingFile.readText())
             val shipping = j.optJSONObject("shipping") ?: JSONObject()
@@ -81,7 +88,13 @@ object BatchImporter {
                 returnPolicyId = j.optString("return_policy_id"),
                 fulfillmentPolicyId = shipping.optString("fulfillment_policy_id"),
                 inventoryLocationKey = j.optString("inventory_location_key"),
-                photos = photos,
+                photos = photos.map { photo ->
+                    val photoFile = File(folder, photo).canonicalFile
+                    require(photoFile.path.startsWith(folder.path + File.separator)) {
+                        "Unsafe photo path: $photo"
+                    }
+                    photo
+                },
                 itemSpecifics = specifics,
                 weightPounds = shipping.optDouble("weight_pounds").takeIf { shipping.has("weight_pounds") && !shipping.isNull("weight_pounds") },
                 weightOunces = shipping.optDouble("weight_ounces").takeIf { shipping.has("weight_ounces") && !shipping.isNull("weight_ounces") },
