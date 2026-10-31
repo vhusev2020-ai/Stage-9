@@ -49,13 +49,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun baseUrl(): String = b.backendUrl.text.toString().trim().trimEnd('/')
+    private fun apiKey(): String = b.backendApiKey.text.toString().trim()
+    private fun requireAccessKey(): Boolean {
+        if (apiKey().isBlank()) { toast("Enter the backend access key first."); return false }
+        return true
+    }
 
     private fun testBackend() {
         val url=baseUrl()
         if(!url.startsWith("https://")) { toast("Backend URL must start with https://"); return }
         AppPrefs.setBackendUrl(this,url); b.statusText.text="Testing backend…"
         thread {
-            val r=BackendClient.ping(url)
+            if (!requireAccessKey()) return
+        val r=BackendClient.ping(url,apiKey())
             runOnUiThread { b.statusText.text=if(r.first)"✓ Backend connected" else "Backend error: ${r.second}" }
         }
     }
@@ -63,10 +69,11 @@ class MainActivity : AppCompatActivity() {
     private fun loadEbaySetup() {
         val url=baseUrl()
         if(!url.startsWith("https://")) { toast("Configure backend first."); return }
+        if(!requireAccessKey()) return
         b.statusText.text="Loading eBay policies and locations…"
         thread {
             try {
-                val j=BackendClient.loadAccountSetup(url)
+                val j=BackendClient.loadAccountSetup(url,apiKey())
                 payments=parsePolicies(j,"paymentPolicies","paymentPolicyId")
                 returns=parsePolicies(j,"returnPolicies","returnPolicyId")
                 fulfillment=parsePolicies(j,"fulfillmentPolicies","fulfillmentPolicyId")
@@ -112,12 +119,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun validateAllAspects() {
         val url=baseUrl()
+        if(!requireAccessKey()) return
         if(listings.isEmpty()){toast("Import a batch first.");return}
         b.statusText.text="Checking category-specific eBay fields…"
         thread {
             listings.forEach { x ->
                 try {
-                    val aspects=BackendClient.loadAspects(url,x.categoryId)
+                    val aspects=BackendClient.loadAspects(url,x.categoryId,apiKey())
                     val missing=aspects.filter{it.required && x.itemSpecifics[it.name].isNullOrEmpty()}
                     x.errors.removeAll{it.startsWith("Missing eBay aspect:")}
                     missing.forEach{x.errors+="Missing eBay aspect: ${it.name}"}
@@ -161,11 +169,12 @@ class MainActivity : AppCompatActivity() {
             ?: run { toast("No ready listing available for test."); return }
         val url = baseUrl()
         if (!url.startsWith("https://")) { toast("Configure backend first."); return }
+        if (!requireAccessKey()) return
 
         b.statusText.text = "Testing first ready listing against eBay requirements…"
         thread {
             try {
-                val result = BackendClient.validateOnly(url, x)
+                val result = BackendClient.validateOnly(url, x,apiKey())
                 runOnUiThread {
                     if (result.optBoolean("ok")) {
                         b.statusText.text = "✓ Test passed for ${x.title}"
@@ -190,7 +199,7 @@ class MainActivity : AppCompatActivity() {
         val url = baseUrl()
         thread {
             try {
-                val aspects = BackendClient.loadAspects(url, target.categoryId)
+                val aspects = BackendClient.loadAspects(url, target.categoryId,apiKey())
                 val missing = aspects.filter { it.required && target.itemSpecifics[it.name].isNullOrEmpty() }
                 runOnUiThread {
                     if (missing.isEmpty()) {
@@ -261,10 +270,11 @@ class MainActivity : AppCompatActivity() {
     private fun publishItems(items:List<Listing>){
         if(items.isEmpty()){toast("No ready listings selected.");return}
         val url=baseUrl(); if(!url.startsWith("https://")){toast("Configure backend first.");return}
+        if(!requireAccessKey()) return
         items.forEach{it.publishState=PublishState.PUBLISHING};show()
         thread{
             try{
-                BackendClient.publish(url,items).forEach{r->
+                BackendClient.publish(url,items,apiKey()).forEach{r->
                     listings.firstOrNull{it.sku==r.sku}?.let{x->
                         if(r.ok){
                             x.publishState=PublishState.PUBLISHED;x.listingId=r.listingId;x.publishError=null
