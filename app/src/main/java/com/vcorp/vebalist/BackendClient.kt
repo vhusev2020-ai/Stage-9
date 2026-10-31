@@ -64,7 +64,14 @@ fun validateOnly(baseUrl: String, listing: Listing, apiKey: String): JSONObject 
         .put("return_policy_id", listing.returnPolicyId)
         .put("inventory_location_key", listing.inventoryLocationKey)
         .put("item_specifics", specifics)
-        .put("shipping", JSONObject().put("fulfillment_policy_id", listing.fulfillmentPolicyId))
+        .put("shipping", JSONObject()
+            .put("fulfillment_policy_id", listing.fulfillmentPolicyId)
+            .put("weight_pounds", listing.weightPounds ?: JSONObject.NULL)
+            .put("weight_ounces", listing.weightOunces ?: JSONObject.NULL)
+            .put("package_length", listing.packageLength ?: JSONObject.NULL)
+            .put("package_width", listing.packageWidth ?: JSONObject.NULL)
+            .put("package_height", listing.packageHeight ?: JSONObject.NULL)
+            .put("package_type", listing.packageType ?: JSONObject.NULL))
 
     val c = URL("$baseUrl/api/validate-listing").openConnection() as HttpURLConnection
     c.requestMethod = "POST"
@@ -107,7 +114,14 @@ fun validateOnly(baseUrl: String, listing: Listing, apiKey: String): JSONObject 
                 .put("return_policy_id", x.returnPolicyId)
                 .put("inventory_location_key", x.inventoryLocationKey)
                 .put("item_specifics", specifics)
-                .put("shipping", JSONObject().put("fulfillment_policy_id", x.fulfillmentPolicyId))
+                .put("shipping", JSONObject()
+                    .put("fulfillment_policy_id", x.fulfillmentPolicyId)
+                    .put("weight_pounds", x.weightPounds ?: JSONObject.NULL)
+                    .put("weight_ounces", x.weightOunces ?: JSONObject.NULL)
+                    .put("package_length", x.packageLength ?: JSONObject.NULL)
+                    .put("package_width", x.packageWidth ?: JSONObject.NULL)
+                    .put("package_height", x.packageHeight ?: JSONObject.NULL)
+                    .put("package_type", x.packageType ?: JSONObject.NULL))
                 .put("photos_data", photos)
             arr.put(obj)
         }
