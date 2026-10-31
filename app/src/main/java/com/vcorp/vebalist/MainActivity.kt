@@ -58,10 +58,10 @@ class MainActivity : AppCompatActivity() {
     private fun testBackend() {
         val url=baseUrl()
         if(!url.startsWith("https://")) { toast("Backend URL must start with https://"); return }
+        if (!requireAccessKey()) return
         AppPrefs.setBackendUrl(this,url); b.statusText.text="Testing backend…"
         thread {
-            if (!requireAccessKey()) return
-        val r=BackendClient.ping(url,apiKey())
+            val r=BackendClient.ping(url,apiKey())
             runOnUiThread { b.statusText.text=if(r.first)"✓ Backend connected" else "Backend error: ${r.second}" }
         }
     }
@@ -271,8 +271,19 @@ class MainActivity : AppCompatActivity() {
 
     private fun publishItems(items:List<Listing>){
         if(items.isEmpty()){toast("No ready listings selected.");return}
+        if(items.size != 1){toast("Safety mode allows one listing at a time.");return}
         val url=baseUrl(); if(!url.startsWith("https://")){toast("Configure backend first.");return}
         if(!requireAccessKey()) return
+        val item=items.first()
+        AlertDialog.Builder(this)
+            .setTitle("Confirm eBay publication")
+            .setMessage("Publish one real eBay listing?\n\n" + item.title + "\nPrice: $" + (item.price ?: 0.0) + "\nSKU: " + item.sku + "\n\nContinue only if the details are correct.")
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Publish this one item") { _, _ -> performPublishItems(items,url) }
+            .show()
+    }
+
+    private fun performPublishItems(items:List<Listing>,url:String){
         items.forEach{it.publishState=PublishState.PUBLISHING};show()
         thread{
             try{
