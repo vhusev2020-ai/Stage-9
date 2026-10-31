@@ -24,6 +24,7 @@ class MainActivity : AppCompatActivity() {
         b = ActivityMainBinding.inflate(layoutInflater); setContentView(b.root)
         b.backendUrl.setText(AppPrefs.getBackendUrl(this))
 
+        b.localInventoryButton.setOnClickListener { startActivity(Intent(this, LocalInventoryActivity::class.java)) }
         b.saveBackendButton.setOnClickListener { testBackend() }
         b.loadEbaySetupButton.setOnClickListener { loadEbaySetup() }
         b.applyDefaultsButton.setOnClickListener { applyDefaults() }
