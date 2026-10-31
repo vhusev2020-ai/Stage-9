@@ -11,9 +11,9 @@ import java.util.Base64
 object BackendClient {
     data class PublishResult(val sku: String, val ok: Boolean, val listingId: String?, val error: String?)
 
-    private fun get(baseUrl: String, path: String): JSONObject {
+    private fun get(baseUrl: String, path: String, apiKey: String): JSONObject {
         val c = URL(baseUrl + path).openConnection() as HttpURLConnection
-        c.requestMethod = "GET"; c.connectTimeout = 15000; c.readTimeout = 30000
+        c.requestMethod = "GET"; c.setRequestProperty("X-VEbalist-Key", apiKey); c.connectTimeout = 15000; c.readTimeout = 30000
         return try {
             val body = (if (c.responseCode in 200..299) c.inputStream else c.errorStream)
                 ?.bufferedReader()?.readText().orEmpty()
@@ -22,14 +22,14 @@ object BackendClient {
         } finally { c.disconnect() }
     }
 
-    fun ping(baseUrl: String): Pair<Boolean,String> = try {
-        Pair(true, get(baseUrl, "/api/status").toString())
+    fun ping(baseUrl: String, apiKey: String): Pair<Boolean,String> = try {
+        Pair(true, get(baseUrl, "/api/status", apiKey).toString())
     } catch (e: Exception) { Pair(false, e.message ?: "Unknown error") }
 
-    fun loadAccountSetup(baseUrl: String): JSONObject = get(baseUrl, "/api/ebay/account-setup")
+    fun loadAccountSetup(baseUrl: String, apiKey: String): JSONObject = get(baseUrl, "/api/ebay/account-setup", apiKey)
 
-    fun loadAspects(baseUrl: String, categoryId: String): List<EbayAspect> {
-        val j = get(baseUrl, "/api/ebay/aspects?category_id=" + URLEncoder.encode(categoryId, "UTF-8"))
+    fun loadAspects(baseUrl: String, categoryId: String, apiKey: String): List<EbayAspect> {
+        val j = get(baseUrl, "/api/ebay/aspects?category_id=" + URLEncoder.encode(categoryId, "UTF-8"), apiKey)
         val arr = j.optJSONArray("aspects") ?: JSONArray()
         val out = mutableListOf<EbayAspect>()
         for (i in 0 until arr.length()) {
@@ -47,7 +47,7 @@ object BackendClient {
     }
 
 
-fun validateOnly(baseUrl: String, listing: Listing): JSONObject {
+fun validateOnly(baseUrl: String, listing: Listing, apiKey: String): JSONObject {
     val specifics = JSONObject()
     listing.itemSpecifics.forEach { (name, values) ->
         val a = JSONArray(); values.forEach { a.put(it) }; specifics.put(name, a)
@@ -69,6 +69,7 @@ fun validateOnly(baseUrl: String, listing: Listing): JSONObject {
     val c = URL("$baseUrl/api/validate-listing").openConnection() as HttpURLConnection
     c.requestMethod = "POST"
     c.setRequestProperty("Content-Type", "application/json")
+    c.setRequestProperty("X-VEbalist-Key", apiKey)
     c.doOutput = true
     c.connectTimeout = 30000
     c.readTimeout = 60000
@@ -81,7 +82,7 @@ fun validateOnly(baseUrl: String, listing: Listing): JSONObject {
     } finally { c.disconnect() }
 }
 
-    fun publish(baseUrl: String, listings: List<Listing>): List<PublishResult> {
+    fun publish(baseUrl: String, listings: List<Listing>, apiKey: String): List<PublishResult> {
         val arr = JSONArray()
         listings.forEach { x ->
             val photos = JSONArray()
@@ -112,7 +113,7 @@ fun validateOnly(baseUrl: String, listing: Listing): JSONObject {
         }
 
         val c = URL("$baseUrl/api/publish-batch").openConnection() as HttpURLConnection
-        c.requestMethod="POST"; c.setRequestProperty("Content-Type","application/json")
+        c.requestMethod="POST"; c.setRequestProperty("Content-Type","application/json"); c.setRequestProperty("X-VEbalist-Key",apiKey)
         c.doOutput=true; c.connectTimeout=60000; c.readTimeout=180000
         c.outputStream.use { it.write(JSONObject().put("items",arr).toString().toByteArray()) }
 
