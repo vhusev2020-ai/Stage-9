@@ -1,21 +1,55 @@
 import os, time, base64, tempfile, requests, hmac
 from urllib.parse import quote
 from flask import Flask, request, jsonify
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token
 
 app=Flask(__name__)
 
 @app.before_request
-def require_api_key():
-    # Keep health checks public; protect all account and publishing endpoints.
+def require_authentication():
+    # Keep only health checks public; accept user ID tokens or server credentials.
     if request.path == "/healthz":
         return None
     configured = os.getenv("VEBALIST_API_KEY", "")
-    if not configured:
-        return jsonify(ok=False, error="Backend API key is not configured"), 503
     supplied = request.headers.get("X-API-Key", "")
-    if not hmac.compare_digest(supplied, configured):
-        return jsonify(ok=False, error="Unauthorized"), 401
-    return None
+    if configured and supplied and hmac.compare_digest(supplied, configured):
+        return None
+
+    authorization = request.headers.get("Authorization", "")
+    scheme, _, token = authorization.partition(" ")
+    if scheme.lower() == "bearer" and token.strip():
+        claims, error, status_code = verify_google_user(token.strip())
+        if claims:
+            request.google_user = claims
+            return None
+        return jsonify(ok=False, error=error), status_code
+
+    if not configured and not os.getenv("VEBALIST_GOOGLE_CLIENT_ID", "").strip():
+        return jsonify(ok=False, error="Backend authentication is not configured"), 503
+    return jsonify(ok=False, error="Unauthorized"), 401
+
+
+def verify_google_user(token):
+    """Verify a Google ID token and enforce the VEbalist account allowlist."""
+    client_id = os.getenv("VEBALIST_GOOGLE_CLIENT_ID", "").strip()
+    allowed_emails = {
+        value.strip().casefold()
+        for value in os.getenv("VEBALIST_ALLOWED_GOOGLE_EMAILS", "").split(",")
+        if value.strip()
+    }
+    if not client_id or not allowed_emails:
+        return None, "User authentication is not configured", 503
+    try:
+        claims = id_token.verify_oauth2_token(
+            token, google_requests.Request(), audience=client_id
+        )
+    except Exception:
+        return None, "Unauthorized", 401
+    email = str(claims.get("email", "")).strip().casefold()
+    if claims.get("email_verified") is not True or email not in allowed_emails:
+        return None, "Unauthorized", 401
+    return claims, None, 200
 
 @app.get("/healthz")
 def healthz():

@@ -2,28 +2,30 @@
 
 **Branch:** `security-and-tests-2026-11-05`  
 **Reviewed:** 2026-11-05  
-**Scope:** Backend CI and Android/web compatibility; no deployment or eBay publishing.
+**Scope:** Backend authentication, Android integration, Replit web app, and CI. No deployment or eBay publishing.
 
-## Evidence
+## Current implementation
 
-- GitHub Actions run `42014833680` (“Backend smoke tests”) completed successfully for branch head `a15d93b08a86ac196ecdbcc36f593d390627e9b4`.
-- The repository contains Android app sources and Flask backend sources. No web application source or web build/deployment configuration is present in this branch.
-- Read-only inspection of the original Replit app `@vslife009/Listing-Automator` found a placeholder screen and no active VEbalist backend integration. Its API spec lists routes not implemented by the server; the only API route is a health check that the UI does not call. No `X-API-Key`, configured user-token getter, auth middleware, or eBay/shared API credentials were found in the inspected workspace. There is no publish UI or implemented publish endpoint. This describes the current Replit workspace; a separately deployed version was not inspected.
-- Android `BackendClient` does not send `X-API-Key`, but backend middleware requires it for `/api/*`. The Android app therefore cannot call protected backend endpoints.
-- Android's publish request also omitted `confirm_publish`; the backend rejects publishing without it. A confirmation dialog is now required before Android sends the explicit confirmation flag.
-- Android previously dropped packed weight and package dimensions from imported batches and omitted those values from validation/publish requests. Import mapping and request serialization now retain both the current backend field names and the sample batch's legacy names. Listings without complete packed shipping measurements are kept out of the ready state.
-- The shared backend API key must not be embedded in an APK or browser bundle. No client-side shared-key workaround was added. A user-authenticated server-side gateway or equivalent identity flow is still needed before Android can connect safely.
+- Backend API authentication now accepts either a verified Google ID token for an email in `VEBALIST_ALLOWED_GOOGLE_EMAILS`, or `X-API-Key` for trusted server-to-server calls. Google token verification checks its signature, issuer, audience, and verified email. Missing auth configuration fails closed.
+- Android uses Credential Manager to sign in, stores the ID token in memory only, and sends it as a Bearer token to protected backend routes. The shared API key is not included in Android.
+- Android retains imported packed weight/dimensions, sends them for validation and publishing, and requires an explicit confirmation dialog before submitting a publish request.
+- The backend still owns eBay OAuth credentials. Android and browser clients do not receive those credentials.
 
-## Checks
+## Web app findings
 
-- GitHub Actions backend smoke-test workflow: passed on the current branch head (run above).
-- Local backend unit tests: passed, 11 tests (`python -m unittest discover -p 'test_*.py' -v`).
-- Android APK build: passed in GitHub Actions run `42015744611` on commit `1db77f8ddac2d00414ab6f0d08347a622eab4bdd`; the debug APK artifact uploaded successfully. Gradle was not installed locally.
-- No live eBay API publishing or production deployment was performed.
+- Read-only inspection of `@vslife009/Listing-Automator` found a placeholder UI, no active VEbalist backend calls, no authentication flow, and no publish UI or implemented publishing endpoint. The app's API specification described routes that were not implemented. No shared backend or eBay credentials were found in the inspected workspace; a separately deployed version was not inspected.
+- A Replit source update has been requested to build the web client with Google sign-in and a same-origin server proxy that forwards the user's ID token to the backend. The update is still in progress; its result has not been verified or published.
 
-## Remaining blockers
+## Verification
 
-1. Choose and implement a safe Android authentication flow that does not ship the shared backend key.
-2. Locate the web app and verify it uses a server-side authenticated proxy; current branch does not contain its source.
-3. Extend the listing editor so users can modify packed weight and dimensions after import; current integration change imports and validates the values but does not yet add editor controls.
-4. Build the Android APK in GitHub Actions and review the result before staging integration.
+- Before the Google token changes, GitHub Actions backend tests passed and the Android APK built successfully. Those runs verify the prior code revision, not the current authentication changes.
+- Local backend tests pass **15/15**, including mocked Google-token acceptance, rejected identities, invalid tokens, missing configuration, API-key calls, confirmation gating, and payload checks.
+- Android build for the current code changes is pending the next branch CI run. A Google OAuth client ID and allowlisted email are not configured here, and no live Google token was used.
+- No production deployment or live eBay API publishing was performed.
+
+## Remaining work
+
+1. Build the current Android changes in GitHub Actions and fix any compile issues.
+2. Configure a Google OAuth web client ID and the exact allowed email on the backend runtime; supply the public client ID to the Android build. This has not been configured in any cloud environment.
+3. Verify the Replit update result and configure the public OAuth client ID and backend URL there; keep all shared keys and eBay secrets server-side.
+4. Add editor controls for packed weight and dimensions, then run staging integration tests before considering a merge.

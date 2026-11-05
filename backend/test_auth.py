@@ -24,6 +24,46 @@ class AuthTests(unittest.TestCase):
         with patch.dict(os.environ, {"VEBALIST_API_KEY": "test-only-key"}):
             self.assertEqual(self.client.get("/api/status", headers={"X-API-Key": "wrong"}).status_code, 401)
 
+    def test_allowlisted_google_id_token_is_accepted(self):
+        env = {
+            "VEBALIST_GOOGLE_CLIENT_ID": "web-client-id",
+            "VEBALIST_ALLOWED_GOOGLE_EMAILS": "owner@example.com",
+        }
+        claims = {"email": "owner@example.com", "email_verified": True}
+        with patch.dict(os.environ, env, clear=True), \
+             patch("app.id_token.verify_oauth2_token", return_value=claims) as verify, \
+             patch("app.access_token", return_value="test-ebay-token"):
+            response = self.client.get("/api/status", headers={"Authorization": "Bearer signed-id-token"})
+        self.assertEqual(response.status_code, 200)
+        verify.assert_called_once()
+        self.assertEqual(verify.call_args.kwargs["audience"], "web-client-id")
+
+    def test_google_id_token_requires_verified_allowlisted_email(self):
+        env = {
+            "VEBALIST_GOOGLE_CLIENT_ID": "web-client-id",
+            "VEBALIST_ALLOWED_GOOGLE_EMAILS": "owner@example.com",
+        }
+        claims = {"email": "other@example.com", "email_verified": True}
+        with patch.dict(os.environ, env, clear=True), \
+             patch("app.id_token.verify_oauth2_token", return_value=claims):
+            response = self.client.get("/api/status", headers={"Authorization": "Bearer signed-id-token"})
+        self.assertEqual(response.status_code, 401)
+
+    def test_google_id_token_requires_auth_configuration(self):
+        with patch.dict(os.environ, {"VEBALIST_GOOGLE_CLIENT_ID": "web-client-id"}, clear=True):
+            response = self.client.get("/api/status", headers={"Authorization": "Bearer signed-id-token"})
+        self.assertEqual(response.status_code, 503)
+
+    def test_invalid_google_id_token_is_rejected(self):
+        env = {
+            "VEBALIST_GOOGLE_CLIENT_ID": "web-client-id",
+            "VEBALIST_ALLOWED_GOOGLE_EMAILS": "owner@example.com",
+        }
+        with patch.dict(os.environ, env, clear=True), \
+             patch("app.id_token.verify_oauth2_token", side_effect=ValueError("invalid token")):
+            response = self.client.get("/api/status", headers={"Authorization": "Bearer invalid-token"})
+        self.assertEqual(response.status_code, 401)
+
     def test_authorized_validation_reaches_handler(self):
         with patch.dict(os.environ, {"VEBALIST_API_KEY": "test-only-key"}):
             response = self.client.post("/api/validate-listing", json={}, headers={"X-API-Key": "test-only-key"})

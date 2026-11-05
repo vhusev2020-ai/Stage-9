@@ -19,9 +19,11 @@
 ## Current evidence (2026-11-05)
 - Existing development PR: https://github.com/vhusev2020-ai/Stage-9/pull/5
 - Backend Flask endpoints include status, account setup, aspects, validation, and batch publishing.
-- Development branch adds API-key authentication, confirmation gate, validation checks, tests, and a Cloud Run container definition.
-- Tests and live deployment are **not yet verified**. Android and web clients may require authentication changes.
-- Replit connector access returned an authorization error. The original app under `@vslife009` has not been verified through the connector.
+- Backend supports a server-side API key and Google ID-token authentication with an email allowlist; eBay credentials remain server-side.
+- Android uses Credential Manager and keeps the ID token in memory, with shipping fields mapped and a publish confirmation dialog.
+- Current authentication code passes 15 local backend tests; CI and APK build for these changes are pending. Prior branch revisions passed backend CI and APK build.
+- Read-only Replit inspection found the original `@vslife009/Listing-Automator` workspace is a placeholder without an active backend integration. A web client update has been requested but is not yet verified or published.
+- Google OAuth runtime configuration and allowlist are not set. No credentials were changed and no deployment or eBay publishing occurred.
 
 ## Every work report must include
 Scope; files changed; commit/PR; tests actually executed and results; remaining risks; owner approvals required; next action.

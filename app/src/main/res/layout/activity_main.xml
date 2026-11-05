@@ -16,6 +16,14 @@
 
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
         android:orientation="horizontal">
+        <Button android:id="@+id/googleSignInButton" android:layout_width="0dp"
+            android:layout_height="wrap_content" android:layout_weight="1" android:text="Sign in with Google"/>
+        <Button android:id="@+id/signOutButton" android:layout_width="0dp"
+            android:layout_height="wrap_content" android:layout_weight="1" android:text="Sign out"/>
+    </LinearLayout>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal">
         <Button android:id="@+id/saveBackendButton" android:layout_width="0dp"
             android:layout_height="wrap_content" android:layout_weight="1" android:text="Test Backend"/>
         <Button android:id="@+id/loadEbaySetupButton" android:layout_width="0dp"
