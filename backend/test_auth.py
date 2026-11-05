@@ -74,5 +74,28 @@ class AuthTests(unittest.TestCase):
         self.assertFalse(ok)
         self.assertTrue(error)
 
+    def test_duplicate_skus_rejected_before_network(self):
+        with patch.dict(os.environ, {"VEBALIST_API_KEY": "test-only-key"}):
+            with patch("app.ebay_get", side_effect=AssertionError("Unexpected eBay call")):
+                response = self.client.post("/api/publish-batch",
+                    json={"confirm_publish": True, "items": [{"sku": "DUP"}, {"sku": "DUP"}]},
+                    headers={"X-API-Key": "test-only-key"})
+                self.assertEqual(response.status_code, 400)
+                self.assertIn("Duplicate", response.get_json()["error"])
+
+    def test_oversized_batch_rejected_before_network(self):
+        with patch.dict(os.environ, {"VEBALIST_API_KEY": "test-only-key"}):
+            with patch("app.ebay_get", side_effect=AssertionError("Unexpected eBay call")):
+                response = self.client.post("/api/publish-batch",
+                    json={"confirm_publish": True, "items": [{"sku": str(i)} for i in range(26)]},
+                    headers={"X-API-Key": "test-only-key"})
+                self.assertEqual(response.status_code, 400)
+                self.assertIn("25", response.get_json()["error"])
+
+    def test_listing_must_be_object(self):
+        from app import validate_listing_payload
+        self.assertFalse(validate_listing_payload(None)[0])
+        self.assertFalse(validate_listing_payload([])[0])
+
 if __name__ == "__main__":
     unittest.main()
