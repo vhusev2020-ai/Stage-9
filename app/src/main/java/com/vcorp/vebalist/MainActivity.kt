@@ -39,10 +39,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         b.publishReadyButton.setOnClickListener {
-            publishItems(listings.filter { it.selected && it.ready && it.publishState!=PublishState.PUBLISHED })
+            confirmAndPublish(listings.filter { it.selected && it.ready && it.publishState!=PublishState.PUBLISHED })
         }
         b.retryFailedButton.setOnClickListener {
-            publishItems(listings.filter { it.publishState==PublishState.FAILED && it.ready })
+            confirmAndPublish(listings.filter { it.publishState==PublishState.FAILED && it.ready })
         }
         b.listView.setOnItemClickListener { _,_,pos,_ -> listings[pos].selected=!listings[pos].selected; show() }
         b.listView.setOnItemLongClickListener { _,_,pos,_ -> editListing(pos); true }
@@ -255,6 +255,18 @@ class MainActivity : AppCompatActivity() {
             .setTitle("Published History")
             .setView(v)
             .setPositiveButton("Close", null)
+            .show()
+    }
+
+    private fun confirmAndPublish(items: List<Listing>) {
+        if (items.isEmpty()) { toast("No ready listings selected."); return }
+        val titles = items.take(5).joinToString("\n") { "• ${it.title}" }
+        val more = if (items.size > 5) "\n… and ${items.size - 5} more" else ""
+        AlertDialog.Builder(this)
+            .setTitle("Confirm eBay publishing")
+            .setMessage("This will publish ${items.size} listing(s) to eBay:\n\n$titles$more\n\nContinue only after reviewing these listings.")
+            .setPositiveButton("Publish to eBay") { _, _ -> publishItems(items) }
+            .setNegativeButton("Cancel", null)
             .show()
     }
 

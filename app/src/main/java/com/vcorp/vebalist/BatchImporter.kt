@@ -82,6 +82,16 @@ object BatchImporter {
                 fulfillmentPolicyId = shipping.optString("fulfillment_policy_id"),
                 inventoryLocationKey = j.optString("inventory_location_key"),
                 photos = photos,
+                weightPounds = shipping.optString("weight_pounds", "0").toDoubleOrNull()
+                    ?: shipping.optString("weight_lb", "0").toDoubleOrNull() ?: 0.0,
+                weightOunces = shipping.optString("weight_ounces", "").toDoubleOrNull()
+                    ?: shipping.optString("weight_oz", "0").toDoubleOrNull() ?: 0.0,
+                packageLength = shipping.optString("package_length", "").toDoubleOrNull()
+                    ?: shipping.optString("length_in", "0").toDoubleOrNull() ?: 0.0,
+                packageWidth = shipping.optString("package_width", "").toDoubleOrNull()
+                    ?: shipping.optString("width_in", "0").toDoubleOrNull() ?: 0.0,
+                packageHeight = shipping.optString("package_height", "").toDoubleOrNull()
+                    ?: shipping.optString("height_in", "0").toDoubleOrNull() ?: 0.0,
                 itemSpecifics = specifics
             )
             validateBase(x)
@@ -102,6 +112,13 @@ object BatchImporter {
         if (x.title.length > 80) x.errors += "Title exceeds 80 characters"
         if (x.price == null || x.price!! <= 0.0) x.errors += "Invalid price"
         if (x.quantity <= 0) x.errors += "Invalid quantity"
+        if (!x.weightPounds.isFinite() || !x.weightOunces.isFinite() ||
+            x.weightPounds < 0 || x.weightOunces < 0 || x.weightPounds * 16 + x.weightOunces <= 0) {
+            x.errors += "Packed weight must be greater than zero"
+        }
+        if (listOf(x.packageLength, x.packageWidth, x.packageHeight).any { !it.isFinite() || it <= 0 }) {
+            x.errors += "Packed dimensions must all be greater than zero"
+        }
         if (x.photos.isEmpty()) x.errors += "No photos"
         x.photos.forEach { if (!File(x.folder, it).exists()) x.errors += "Missing photo: $it" }
     }
