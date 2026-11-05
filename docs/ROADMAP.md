@@ -4,8 +4,8 @@ Tasks are proposed, not proof of completion. Update statuses only with verified 
 
 | Priority | Task | Acceptance criteria | Status |
 |---|---|---|---|
-| P0 | Verify backend CI | Unit tests run in GitHub Actions and show passing status | Current auth changes pass 15/15 locally; branch CI pending |
-| P0 | Audit Android client | Identify actual API caller and version; verify compatibility with protected endpoints | Google ID-token sign-in and Bearer-token requests implemented; branch APK build and OAuth configuration pending |
+| P0 | Verify backend CI | Unit tests run in GitHub Actions and show passing status | Verified: run 42018029479 passed on auth commit `75b19c5`; 15/15 local tests pass |
+| P0 | Audit Android client | Identify actual API caller and version; verify compatibility with protected endpoints | Google ID-token sign-in and Bearer-token requests implemented; APK run 42018029357 passed; OAuth configuration pending |
 | P0 | Audit web application | Locate source/deployment; verify server-side auth proxy and no browser-embedded secrets | Replit update requested to implement Google sign-in and backend proxy; result pending |
 | P0 | Review security PR | Confirm API key strategy, confirmation flow, and staging behavior before merge | In progress: PR #5 draft |
 | P1 | Staging backend | Build image, configure runtime secret references, smoke-test endpoints | Not started; requires OAuth client ID and email allowlist; owner approval needed for deployment |

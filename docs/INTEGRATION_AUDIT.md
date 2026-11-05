@@ -18,14 +18,14 @@
 
 ## Verification
 
-- Before the Google token changes, GitHub Actions backend tests passed and the Android APK built successfully. Those runs verify the prior code revision, not the current authentication changes.
+- GitHub Actions backend tests passed on authentication commit `75b19c5` (run `42018029479`).
+- The Android debug APK built and uploaded successfully on authentication commit `75b19c5` (run `42018029357`).
 - Local backend tests pass **15/15**, including mocked Google-token acceptance, rejected identities, invalid tokens, missing configuration, API-key calls, confirmation gating, and payload checks.
-- Android build for the current code changes is pending the next branch CI run. A Google OAuth client ID and allowlisted email are not configured here, and no live Google token was used.
+- A Google OAuth client ID and allowlisted email are not configured here, and no live Google token was used.
 - No production deployment or live eBay API publishing was performed.
 
 ## Remaining work
 
-1. Build the current Android changes in GitHub Actions and fix any compile issues.
-2. Configure a Google OAuth web client ID and the exact allowed email on the backend runtime; supply the public client ID to the Android build. This has not been configured in any cloud environment.
-3. Verify the Replit update result and configure the public OAuth client ID and backend URL there; keep all shared keys and eBay secrets server-side.
-4. Add editor controls for packed weight and dimensions, then run staging integration tests before considering a merge.
+1. Configure a Google OAuth web client ID and the exact allowed email on the backend runtime; supply the public client ID to the Android build. This has not been configured in any cloud environment.
+2. Verify the Replit update result and configure the public OAuth client ID and backend URL there; keep all shared keys and eBay secrets server-side.
+3. Add editor controls for packed weight and dimensions, then run staging integration tests before considering a merge.
