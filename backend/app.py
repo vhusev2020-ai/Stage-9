@@ -238,19 +238,43 @@ def validate_listing_payload(item):
     if len(str(item.get("title",""))) > 80:
         return False, "Title exceeds 80 characters"
     try:
-        if float(item.get("price",0)) <= 0:
+        from math import isfinite
+        price = float(item.get("price",0))
+        if not isfinite(price) or price <= 0:
             return False, "Price must be > 0"
     except Exception:
         return False, "Invalid price"
-    if int(item.get("quantity",0)) <= 0:
-        return False, "Quantity must be > 0"
-    shipping=item.get("shipping",{})
-    shipping_missing=[]
-    if not (shipping.get("weight_pounds") or shipping.get("weight_ounces")): shipping_missing.append("packed weight")
-    for key,label in (("package_length","package length"),("package_width","package width"),("package_height","package height")):
-        if not shipping.get(key): shipping_missing.append(label)
-    if shipping_missing:
-        return False, "Shipping information incomplete: " + ", ".join(shipping_missing)
+    try:
+        quantity = int(item.get("quantity", 0))
+        if isinstance(item.get("quantity"), bool) or str(item.get("quantity")).strip() != str(quantity) or quantity <= 0:
+            return False, "Quantity must be a positive whole number"
+    except (TypeError, ValueError, OverflowError):
+        return False, "Quantity must be a positive whole number"
+    shipping = item.get("shipping")
+    if not isinstance(shipping, dict):
+        return False, "Shipping must be an object"
+    from math import isfinite
+    numeric_fields = ("weight_pounds", "weight_ounces", "package_length", "package_width", "package_height")
+    values = {}
+    for field in numeric_fields:
+        raw = shipping.get(field)
+        if raw in (None, ""):
+            if field in ("weight_pounds", "weight_ounces"):
+                values[field] = 0.0
+                continue
+            return False, "Shipping information incomplete: " + field.replace("_", " ")
+        try:
+            value = float(raw)
+        except (TypeError, ValueError, OverflowError):
+            return False, "Invalid shipping value: " + field
+        if not isfinite(value) or value < 0:
+            return False, "Invalid shipping value: " + field
+        values[field] = value
+    if values["weight_pounds"] * 16 + values["weight_ounces"] <= 0:
+        return False, "Packed weight must be greater than zero"
+    for field in ("package_length", "package_width", "package_height"):
+        if values[field] <= 0:
+            return False, field.replace("_", " ") + " must be greater than zero"
 
     # Check category-required aspects against eBay taxonomy
     category_id=str(item["category_id"])
