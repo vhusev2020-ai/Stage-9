@@ -21,7 +21,7 @@
 - Backend Flask endpoints include status, account setup, aspects, validation, and batch publishing.
 - Backend supports a server-side API key and Google ID-token authentication with an email allowlist; eBay credentials remain server-side.
 - Android uses Credential Manager and keeps the ID token in memory, with shipping fields mapped and a publish confirmation dialog.
-- Current authentication code passes 15 local backend tests; CI and APK build for these changes are pending. Prior branch revisions passed backend CI and APK build.
+- Current authentication code passes 15 local backend tests; GitHub Actions backend run 42018029479 and APK run 42018029357 both passed on commit `75b19c5`.
 - Read-only Replit inspection found the original `@vslife009/Listing-Automator` workspace is a placeholder without an active backend integration. A web client update has been requested but is not yet verified or published.
 - Google OAuth runtime configuration and allowlist are not set. No credentials were changed and no deployment or eBay publishing occurred.
 
