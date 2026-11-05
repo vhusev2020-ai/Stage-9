@@ -64,7 +64,7 @@ fun validateOnly(baseUrl: String, listing: Listing): JSONObject {
         .put("return_policy_id", listing.returnPolicyId)
         .put("inventory_location_key", listing.inventoryLocationKey)
         .put("item_specifics", specifics)
-        .put("shipping", JSONObject().put("fulfillment_policy_id", listing.fulfillmentPolicyId))
+        .put("shipping", shippingObject(listing))
 
     val c = URL("$baseUrl/api/validate-listing").openConnection() as HttpURLConnection
     c.requestMethod = "POST"
@@ -106,7 +106,7 @@ fun validateOnly(baseUrl: String, listing: Listing): JSONObject {
                 .put("return_policy_id", x.returnPolicyId)
                 .put("inventory_location_key", x.inventoryLocationKey)
                 .put("item_specifics", specifics)
-                .put("shipping", JSONObject().put("fulfillment_policy_id", x.fulfillmentPolicyId))
+                .put("shipping", shippingObject(x))
                 .put("photos_data", photos)
             arr.put(obj)
         }
@@ -114,7 +114,7 @@ fun validateOnly(baseUrl: String, listing: Listing): JSONObject {
         val c = URL("$baseUrl/api/publish-batch").openConnection() as HttpURLConnection
         c.requestMethod="POST"; c.setRequestProperty("Content-Type","application/json")
         c.doOutput=true; c.connectTimeout=60000; c.readTimeout=180000
-        c.outputStream.use { it.write(JSONObject().put("items",arr).toString().toByteArray()) }
+        c.outputStream.use { it.write(JSONObject().put("items",arr).put("confirm_publish", true).toString().toByteArray()) }
 
         return try {
             val body=(if(c.responseCode in 200..299)c.inputStream else c.errorStream)
@@ -133,4 +133,12 @@ fun validateOnly(baseUrl: String, listing: Listing): JSONObject {
             out
         } finally { c.disconnect() }
     }
+
+    private fun shippingObject(listing: Listing) = JSONObject()
+        .put("fulfillment_policy_id", listing.fulfillmentPolicyId)
+        .put("weight_pounds", listing.weightPounds)
+        .put("weight_ounces", listing.weightOunces)
+        .put("package_length", listing.packageLength)
+        .put("package_width", listing.packageWidth)
+        .put("package_height", listing.packageHeight)
 }
