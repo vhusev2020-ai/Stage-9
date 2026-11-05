@@ -1,0 +1,33 @@
+name: VEbalist agent task
+description: Scoped development task with verification and approval gates
+title: "[VEbalist] "
+labels: []
+body:
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: What user-visible result should change?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Include measurable success criteria and tests.
+    validations:
+      required: true
+  - type: textarea
+    id: safety
+    attributes:
+      label: Safety and compatibility
+      description: Existing clients, secrets, eBay publishing, production impacts.
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification evidence
+      description: Actual commands, CI links, results, and blockers.
+    validations:
+      required: false
