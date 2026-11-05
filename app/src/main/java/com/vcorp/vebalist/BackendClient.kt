@@ -10,10 +10,16 @@ import java.util.Base64
 
 object BackendClient {
     data class PublishResult(val sku: String, val ok: Boolean, val listingId: String?, val error: String?)
+    @Volatile private var googleIdToken: String? = null
+
+    fun setGoogleIdToken(token: String?) {
+        googleIdToken = token
+    }
 
     private fun get(baseUrl: String, path: String): JSONObject {
         val c = URL(baseUrl + path).openConnection() as HttpURLConnection
         c.requestMethod = "GET"; c.connectTimeout = 15000; c.readTimeout = 30000
+        googleIdToken?.let { c.setRequestProperty("Authorization", "Bearer $it") }
         return try {
             val body = (if (c.responseCode in 200..299) c.inputStream else c.errorStream)
                 ?.bufferedReader()?.readText().orEmpty()
@@ -69,6 +75,7 @@ fun validateOnly(baseUrl: String, listing: Listing): JSONObject {
     val c = URL("$baseUrl/api/validate-listing").openConnection() as HttpURLConnection
     c.requestMethod = "POST"
     c.setRequestProperty("Content-Type", "application/json")
+    googleIdToken?.let { c.setRequestProperty("Authorization", "Bearer $it") }
     c.doOutput = true
     c.connectTimeout = 30000
     c.readTimeout = 60000
@@ -113,6 +120,7 @@ fun validateOnly(baseUrl: String, listing: Listing): JSONObject {
 
         val c = URL("$baseUrl/api/publish-batch").openConnection() as HttpURLConnection
         c.requestMethod="POST"; c.setRequestProperty("Content-Type","application/json")
+        googleIdToken?.let { c.setRequestProperty("Authorization", "Bearer $it") }
         c.doOutput=true; c.connectTimeout=60000; c.readTimeout=180000
         c.outputStream.use { it.write(JSONObject().put("items",arr).put("confirm_publish", true).toString().toByteArray()) }
 

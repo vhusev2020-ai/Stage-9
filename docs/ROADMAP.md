@@ -4,11 +4,11 @@ Tasks are proposed, not proof of completion. Update statuses only with verified 
 
 | Priority | Task | Acceptance criteria | Status |
 |---|---|---|---|
-| P0 | Verify backend CI | Unit tests run in GitHub Actions and show passing status | Verified: run 42014833680 passed on branch head `a15d93b` |
-| P0 | Audit Android client | Identify actual API caller and version; verify compatibility with protected endpoints | In progress: missing shared-key auth identified; confirmation and shipping payload gaps addressed; safe auth remains |
-| P0 | Audit web application | Locate source/deployment; verify server-side auth proxy and no browser-embedded secrets | Not implemented: Replit workspace is a placeholder; no active backend calls, auth flow, or publish UI |
+| P0 | Verify backend CI | Unit tests run in GitHub Actions and show passing status | Current auth changes pass 15/15 locally; branch CI pending |
+| P0 | Audit Android client | Identify actual API caller and version; verify compatibility with protected endpoints | Google ID-token sign-in and Bearer-token requests implemented; branch APK build and OAuth configuration pending |
+| P0 | Audit web application | Locate source/deployment; verify server-side auth proxy and no browser-embedded secrets | Replit update requested to implement Google sign-in and backend proxy; result pending |
 | P0 | Review security PR | Confirm API key strategy, confirmation flow, and staging behavior before merge | In progress: PR #5 draft |
-| P1 | Staging backend | Build image, configure runtime secret references, smoke-test endpoints | Not started; owner approval needed for deployment |
+| P1 | Staging backend | Build image, configure runtime secret references, smoke-test endpoints | Not started; requires OAuth client ID and email allowlist; owner approval needed for deployment |
 | P1 | Listing draft pipeline | Multi-photo identification, title, description, category, aspects, suggested price | Not started in audited backend |
 | P1 | Shipping and exports | Editable packed weight/dimensions, CSV/JSON exports, validation | Partially implemented: Android imports and validates packed measurements; editor controls and end-to-end remain |
 | P1 | Photo preparation | Preserve originals, produce optional white-background copies | Not verified |

@@ -3,6 +3,10 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+val googleWebClientId = providers.gradleProperty("vebalistGoogleClientId")
+    .orElse(providers.environmentVariable("VEBALIST_GOOGLE_CLIENT_ID"))
+    .getOrElse("")
+
 android {
     signingConfigs {
         create("release") {
@@ -24,6 +28,7 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
+        resValue("string", "default_web_client_id", googleWebClientId)
     }
 
     buildTypes {
@@ -57,4 +62,8 @@ dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
+    implementation("androidx.credentials:credentials:1.5.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
 }

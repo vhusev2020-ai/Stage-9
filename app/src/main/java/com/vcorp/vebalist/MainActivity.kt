@@ -7,8 +7,16 @@ import android.view.LayoutInflater
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.credentials.ClearCredentialStateRequest
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.lifecycle.lifecycleScope
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.vcorp.vebalist.databinding.ActivityMainBinding
 import org.json.JSONObject
+import kotlinx.coroutines.launch
 import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {
@@ -24,6 +32,8 @@ class MainActivity : AppCompatActivity() {
         b = ActivityMainBinding.inflate(layoutInflater); setContentView(b.root)
         b.backendUrl.setText(AppPrefs.getBackendUrl(this))
 
+        b.googleSignInButton.setOnClickListener { signInWithGoogle() }
+        b.signOutButton.setOnClickListener { signOut() }
         b.saveBackendButton.setOnClickListener { testBackend() }
         b.loadEbaySetupButton.setOnClickListener { loadEbaySetup() }
         b.applyDefaultsButton.setOnClickListener { applyDefaults() }
@@ -49,6 +59,58 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun baseUrl(): String = b.backendUrl.text.toString().trim().trimEnd('/')
+
+    private fun signInWithGoogle() {
+        val webClientId = getString(R.string.default_web_client_id).trim()
+        if (webClientId.isBlank()) {
+            toast("Google sign-in is not configured. Set VEBALIST_GOOGLE_CLIENT_ID in the build environment.")
+            return
+        }
+        b.statusText.text = "Choose your Google account…"
+        lifecycleScope.launch {
+            try {
+                val manager = CredentialManager.create(this@MainActivity)
+                val option = GetSignInWithGoogleOption.Builder(serverClientId = webClientId).build()
+                val request = GetCredentialRequest.Builder().addCredentialOption(option).build()
+                val result = manager.getCredential(context = this@MainActivity, request = request)
+                val credential = result.credential
+                if (credential !is CustomCredential ||
+                    credential.type != GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                    throw IllegalStateException("Google did not return an ID token.")
+                }
+                val token = GoogleIdTokenCredential.createFrom(credential.data).idToken
+                BackendClient.setGoogleIdToken(token)
+                val url = baseUrl()
+                if (!url.startsWith("https://")) {
+                    b.statusText.text = "Signed in. Enter a secure backend URL, then test the connection."
+                    return@launch
+                }
+                b.statusText.text = "Checking authenticated backend…"
+                thread {
+                    val result = BackendClient.ping(url)
+                    runOnUiThread {
+                        b.statusText.text = if (result.first) "✓ Signed in and connected" else "Sign-in succeeded; backend error: ${result.second}"
+                    }
+                }
+            } catch (e: Exception) {
+                BackendClient.setGoogleIdToken(null)
+                b.statusText.text = "Google sign-in failed: ${e.message ?: "Unknown error"}"
+            }
+        }
+    }
+
+    private fun signOut() {
+        BackendClient.setGoogleIdToken(null)
+        lifecycleScope.launch {
+            try {
+                CredentialManager.create(this@MainActivity)
+                    .clearCredentialState(ClearCredentialStateRequest())
+            } catch (_: Exception) {
+                // The app token is cleared even if a credential provider cannot reset its UI state.
+            }
+            b.statusText.text = "Signed out."
+        }
+    }
 
     private fun testBackend() {
         val url=baseUrl()
