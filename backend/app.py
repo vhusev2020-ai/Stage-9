@@ -230,7 +230,8 @@ def validate_listing_payload(item):
         "payment_policy_id","return_policy_id","inventory_location_key"
     ]
     missing=[x for x in required if item.get(x) in (None,"",[],{})]
-    if not item.get("shipping",{}).get("fulfillment_policy_id"):
+    shipping_data = item.get("shipping")
+    if not isinstance(shipping_data, dict) or not shipping_data.get("fulfillment_policy_id"):
         missing.append("shipping.fulfillment_policy_id")
     if missing:
         return False, "Missing fields: " + ", ".join(missing)
