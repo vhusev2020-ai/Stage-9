@@ -285,8 +285,16 @@ def validate_listing():
 
 @app.post("/api/publish-batch")
 def publish_batch():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify(ok=False, error="Expected a JSON object"), 400
+    if payload.get("confirm_publish") is not True:
+        return jsonify(ok=False, error="Explicit publish confirmation required"), 400
+    items = payload.get("items")
+    if not isinstance(items, list) or not items or any(not isinstance(item, dict) for item in items):
+        return jsonify(ok=False, error="items must be a non-empty list of listings"), 400
     results=[]
-    for item in request.get_json(force=True).get("items",[]):
+    for item in items:
         x={"sku":item.get("sku"),"ok":False}
         try:
             valid,error=validate_listing_payload(item)
