@@ -17,7 +17,7 @@
 
 - GitHub Actions backend smoke-test workflow: passed on the current branch head (run above).
 - Local backend unit tests: passed, 11 tests (`python -m unittest discover -p 'test_*.py' -v`).
-- Android APK build: not run locally; Gradle is not installed in the execution environment. The APK workflow now also runs when this development branch is pushed, so GitHub Actions can verify the app build.
+- Android APK build: passed in GitHub Actions run `42015744611` on commit `1db77f8ddac2d00414ab6f0d08347a622eab4bdd`; the debug APK artifact uploaded successfully. Gradle was not installed locally.
 - No live eBay API publishing or production deployment was performed.
 
 ## Remaining blockers
