@@ -225,6 +225,8 @@ def publish_offer(offer_id):
 
 
 def validate_listing_payload(item):
+    if not isinstance(item, dict):
+        return False, "Listing must be an object"
     required = [
         "sku","title","description","category_id","condition","price","quantity",
         "payment_policy_id","return_policy_id","inventory_location_key"
@@ -318,6 +320,11 @@ def publish_batch():
     items = payload.get("items")
     if not isinstance(items, list) or not items or any(not isinstance(item, dict) for item in items):
         return jsonify(ok=False, error="items must be a non-empty list of listings"), 400
+    if len(items) > 25:
+        return jsonify(ok=False, error="Batch exceeds 25 listings; split into smaller batches"), 400
+    skus = [str(item.get("sku", "")).strip() for item in items]
+    if len(skus) != len(set(skus)):
+        return jsonify(ok=False, error="Duplicate SKUs in batch"), 400
     results=[]
     for item in items:
         x={"sku":item.get("sku"),"ok":False}
